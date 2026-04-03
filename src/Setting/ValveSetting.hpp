@@ -7,5 +7,5 @@ public:
     ValveSetting();
     uint8_t getPin();
     std::string getName();
-    uint8_t getHumiditySlaveAddress();
+    uint8_t getSoilSensorSlaveAddress();
 };

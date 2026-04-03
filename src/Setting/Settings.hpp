@@ -2,7 +2,7 @@
 #include "ValveSetting.hpp"
 #include "PresureSensorSetting.hpp"
 #include "WaterCounterSetting.hpp"
-#include "HumiditySensorSetting.hpp"
+#include "SoilSensorSetting.hpp"
 
 class Settings
 {
@@ -12,5 +12,5 @@ public:
     PresureSensorSetting getPresureSensorSetting();
     WaterCounterSetting getMagistralWaterCounterSetting();
     std::vector<WaterCounterSetting> getLeafWaterCounterSetting();
-    std::vector<HumiditySensorSetting> getHumiditySensorSetting();
+    std::vector<SoilSensorSetting> getSoilSensorSetting();
 };

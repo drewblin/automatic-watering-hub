@@ -14,7 +14,7 @@ std::string ValveSetting::getName()
     return "";
 }
 
-uint8_t ValveSetting::getHumiditySlaveAddress()
+uint8_t ValveSetting::getSoilSensorSlaveAddress()
 {
     return 0;
 }

@@ -4,6 +4,12 @@
 class WaterHubBuilder
 {
 public:
-    WaterHubBuilder() = default;
+    WaterHubBuilder(
+        ModbusMaster &modbusNode,
+        HardwareSerial &modbusSerialPort);
     WaterHub build(Settings settings);
+
+private:
+    ModbusMaster &modbusNode;
+    HardwareSerial &modbusSerialPort;
 };

@@ -15,13 +15,13 @@ void WaterHub::addLeafWaterCounter(std::unique_ptr<WaterCounter> counter)
     leafWaterCounters.push_back(std::move(counter));
 }
 
-void WaterHub::addHumiditySensor(std::unique_ptr<HumiditySensor> sensor)
+void WaterHub::addSoilSensor(std::unique_ptr<SoilSensor> sensor)
 {
-    humiditySensors.push_back(std::move(sensor));
+    soilSensors.push_back(std::move(sensor));
 }
 
-void WaterHub::addValve(std::unique_ptr<Valve> valve, HumiditySensor* sensor)
+void WaterHub::addValve(std::unique_ptr<Valve> valve, SoilSensor* sensor)
 {
     valves.push_back(std::move(valve));
-    valveToHumiditySensorMap[valves.back().get()] = sensor;
+    valveToSoilSensorMap[valves.back().get()] = sensor;
 }

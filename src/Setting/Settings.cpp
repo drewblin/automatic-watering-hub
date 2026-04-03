@@ -24,7 +24,7 @@ std::vector<WaterCounterSetting> Settings::getLeafWaterCounterSetting()
     return std::vector<WaterCounterSetting>();
 }
 
-std::vector<HumiditySensorSetting> Settings::getHumiditySensorSetting()
+std::vector<SoilSensorSetting> Settings::getSoilSensorSetting()
 {
-    return std::vector<HumiditySensorSetting>();
+    return std::vector<SoilSensorSetting>();
 }

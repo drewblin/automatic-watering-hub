@@ -2,6 +2,13 @@
 #include <memory>
 #include "WaterHubBuilder.hpp"
 
+WaterHubBuilder::WaterHubBuilder(
+    ModbusMaster &modbusNode,
+    HardwareSerial &modbusSerialPort) : modbusNode(modbusNode),
+                                        modbusSerialPort(modbusSerialPort)
+{
+}
+
 WaterHub WaterHubBuilder::build(Settings settings)
 {
     WaterHub waterHub = WaterHub();
@@ -20,15 +27,18 @@ WaterHub WaterHubBuilder::build(Settings settings)
         settings.getPresureSensorSetting().getSlaveAddress());
     waterHub.setPresureSensor(std::move(presureSensor));
 
-    std::unordered_map<std::uint8_t, HumiditySensor *> humiditySensorMap;
-    for (HumiditySensorSetting setting : settings.getHumiditySensorSetting())
+    std::unordered_map<std::uint8_t, SoilSensor *> soilSensorMap;
+    for (SoilSensorSetting setting : settings.getSoilSensorSetting())
     {
-        auto humiditySensor = std::make_unique<HumiditySensor>(setting.getSlaveAddress());
-        HumiditySensor *humiditySensorPtr = humiditySensor.get();
+        auto soilSensor = std::make_unique<SoilSensor>(
+            modbusNode,
+            modbusSerialPort,
+            setting.getSlaveAddress());
+        SoilSensor *soilSensorPtr = soilSensor.get();
 
-        waterHub.addHumiditySensor(std::move(humiditySensor));
+        waterHub.addSoilSensor(std::move(soilSensor));
 
-        humiditySensorMap[setting.getSlaveAddress()] = humiditySensorPtr;
+        soilSensorMap[setting.getSlaveAddress()] = soilSensorPtr;
     }
 
     for (ValveSetting setting : settings.getValveSetting())
@@ -36,7 +46,7 @@ WaterHub WaterHubBuilder::build(Settings settings)
         auto valve = std::make_unique<Valve>(setting.getPin());
         waterHub.addValve(
             std::move(valve),
-            humiditySensorMap.find(setting.getHumiditySlaveAddress())->second);
+            soilSensorMap.find(setting.getSoilSensorSlaveAddress())->second);
     }
 
     return waterHub;
