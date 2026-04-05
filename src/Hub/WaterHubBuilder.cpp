@@ -24,6 +24,8 @@ WaterHub WaterHubBuilder::build(Settings settings)
     }
 
     auto presureSensor = std::make_unique<PresureSendor>(
+        modbusNode,
+        modbusSerialPort,
         settings.getPresureSensorSetting().getSlaveAddress());
     waterHub.setPresureSensor(std::move(presureSensor));
 
