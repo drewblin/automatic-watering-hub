@@ -1,16 +1,17 @@
+#include <Arduino.h>
 #include "Valve.hpp"
 
-Valve::Valve(uint8_t pin)
+Valve::Valve(uint8_t pin) : pin_(pin)
 {
-    // Initialize the valve with the given pin
+    pinMode(pin_, OUTPUT);
 }
 
 void Valve::open()
 {
-    // Code to open the valve
+    digitalWrite(pin_, HIGH);
 }
 
 void Valve::close()
 {
-    // Code to close the valve
+    digitalWrite(pin_, LOW);
 }
