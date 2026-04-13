@@ -1,4 +1,5 @@
 #include <vector>
+#include "ArduinoJson.h"
 #include "ValveSetting.hpp"
 #include "PresureSensorSetting.hpp"
 #include "WaterCounterSetting.hpp"
@@ -13,4 +14,7 @@ public:
     WaterCounterSetting getMagistralWaterCounterSetting();
     std::vector<WaterCounterSetting> getLeafWaterCounterSetting();
     std::vector<SoilSensorSetting> getSoilSensorSetting();
+
+private:
+    JsonDocument doc_;
 };

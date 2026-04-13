@@ -1,6 +1,6 @@
 #include "ValveSetting.hpp"
 
-ValveSetting::ValveSetting()
+ValveSetting::ValveSetting(uint8_t pin, std::string name, uint8_t soilSensorSlaveAddress)
 {
 }
 

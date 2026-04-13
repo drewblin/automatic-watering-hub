@@ -1,6 +1,6 @@
 #include "WaterCounterSetting.hpp"
 
-WaterCounterSetting::WaterCounterSetting()
+WaterCounterSetting::WaterCounterSetting(uint8_t pin, std::string name, float litersPerTick)
 {
 }
 

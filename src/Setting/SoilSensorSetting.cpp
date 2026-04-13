@@ -1,6 +1,6 @@
 #include "SoilSensorSetting.hpp"
 
-SoilSensorSetting::SoilSensorSetting()
+SoilSensorSetting::SoilSensorSetting(uint8_t slaveAddress, std::string name)
 {
 }
 

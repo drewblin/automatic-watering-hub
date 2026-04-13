@@ -1,6 +1,6 @@
 #include "PresureSensorSetting.hpp"
 
-PresureSensorSetting::PresureSensorSetting()
+PresureSensorSetting::PresureSensorSetting(uint8_t slaveAddress)
 {
 }
 

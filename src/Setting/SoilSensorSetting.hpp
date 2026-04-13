@@ -4,7 +4,7 @@
 class SoilSensorSetting
 {
 public:
-    SoilSensorSetting();
+    SoilSensorSetting(uint8_t slaveAddress, std::string name);
     uint8_t getSlaveAddress();
     std::string getName();
 };
