@@ -1,20 +1,21 @@
 #include "ValveSetting.hpp"
 
 ValveSetting::ValveSetting(uint8_t pin, std::string name, uint8_t soilSensorSlaveAddress)
+    : pin_(pin), name_(name), soilSensorSlaveAddress_(soilSensorSlaveAddress)
 {
 }
 
 uint8_t ValveSetting::getPin()
 {
-    return 0;
+    return pin_;
 }
 
 std::string ValveSetting::getName()
 {
-    return "";
+    return name_;
 }
 
 uint8_t ValveSetting::getSoilSensorSlaveAddress()
 {
-    return 0;
+    return soilSensorSlaveAddress_;
 }

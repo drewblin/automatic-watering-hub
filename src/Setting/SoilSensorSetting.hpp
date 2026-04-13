@@ -7,4 +7,8 @@ public:
     SoilSensorSetting(uint8_t slaveAddress, std::string name);
     uint8_t getSlaveAddress();
     std::string getName();
+
+private:
+    uint8_t slaveAddress_;
+    std::string name_;
 };

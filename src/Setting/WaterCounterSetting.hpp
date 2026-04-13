@@ -8,4 +8,9 @@ public:
     uint8_t getPin();
     float getLitersPerTick();
     std::string getName();
+
+private:
+    uint8_t pin_;
+    std::string name_;
+    float litersPerTick_;
 };

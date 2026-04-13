@@ -8,4 +8,9 @@ public:
     uint8_t getPin();
     std::string getName();
     uint8_t getSoilSensorSlaveAddress();
+
+private:
+    uint8_t pin_;
+    std::string name_;
+    uint8_t soilSensorSlaveAddress_;
 };

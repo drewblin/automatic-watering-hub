@@ -1,15 +1,16 @@
 #include "SoilSensorSetting.hpp"
 
 SoilSensorSetting::SoilSensorSetting(uint8_t slaveAddress, std::string name)
+    : slaveAddress_(slaveAddress), name_(name)
 {
 }
 
 uint8_t SoilSensorSetting::getSlaveAddress()
 {
-    return 0x0;
+    return slaveAddress_;
 }
 
 std::string SoilSensorSetting::getName()
 {
-    return "";
+    return name_;
 }
