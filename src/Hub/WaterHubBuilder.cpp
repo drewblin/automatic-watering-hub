@@ -13,13 +13,19 @@ WaterHub WaterHubBuilder::build(Settings settings)
 {
     WaterHub waterHub = WaterHub();
 
+    auto magistralWaterCounterSetting = settings.getMagistralWaterCounterSetting();
     auto magistralWaterCounter = std::make_unique<WaterCounter>(
-        settings.getMagistralWaterCounterSetting().getPin());
+        magistralWaterCounterSetting.getPin(),
+        magistralWaterCounterSetting.getLitersPerTick()
+    );
     waterHub.setMagistralWaterCounter(std::move(magistralWaterCounter));
 
     for (WaterCounterSetting setting : settings.getLeafWaterCounterSetting())
     {
-        auto leafWaterCounter = std::make_unique<WaterCounter>(setting.getPin());
+        auto leafWaterCounter = std::make_unique<WaterCounter>(
+            setting.getPin(),
+            setting.getLitersPerTick()
+        );
         waterHub.addLeafWaterCounter(std::move(leafWaterCounter));
     }
 
