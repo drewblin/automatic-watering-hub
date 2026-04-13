@@ -1,13 +1,13 @@
 #include <stdint.h>
 #include "ModbusMaster.h"
 
-class PresureSendor
+class PressureSendor
 {
 public:
-    PresureSendor(ModbusMaster &modbusNode,
+    PressureSendor(ModbusMaster &modbusNode,
                   HardwareSerial &serialPort,
                   uint8_t slaveAddress);
-    float readPresure();
+    float readPressure();
 
 private:
     ModbusMaster &modbusNode_;

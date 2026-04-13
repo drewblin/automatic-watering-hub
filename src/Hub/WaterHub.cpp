@@ -5,9 +5,9 @@ void WaterHub::setMagistralWaterCounter(std::unique_ptr<WaterCounter> counter)
     magistralWaterCounter_ = std::move(counter);
 }
 
-void WaterHub::setPresureSensor(std::unique_ptr<PresureSendor> sensor)
+void WaterHub::setPressureSensor(std::unique_ptr<PressureSendor> sensor)
 {
-    presureSensor_ = std::move(sensor);
+    pressureSensor_ = std::move(sensor);
 }
 
 void WaterHub::addLeafWaterCounter(std::unique_ptr<WaterCounter> counter)

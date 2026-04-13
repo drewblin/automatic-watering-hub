@@ -2,7 +2,7 @@
 #include <memory>
 #include <unordered_map>
 #include "Sensor/WaterCounter.hpp"
-#include "Sensor/PresureSensor.hpp"
+#include "Sensor/PressureSensor.hpp"
 #include "Sensor/SoilSensor.hpp"
 #include "Valve/Valve.hpp"
 
@@ -12,14 +12,14 @@ public:
     WaterHub() = default;
 
     void setMagistralWaterCounter(std::unique_ptr<WaterCounter> counter);
-    void setPresureSensor(std::unique_ptr<PresureSendor> sensor);
+    void setPressureSensor(std::unique_ptr<PressureSendor> sensor);
     void addLeafWaterCounter(std::unique_ptr<WaterCounter> counter);
     void addSoilSensor(std::unique_ptr<SoilSensor> sensor);
     void addValve(std::unique_ptr<Valve> valve, SoilSensor* sensor);
 
 private:
     std::unique_ptr<WaterCounter> magistralWaterCounter_;
-    std::unique_ptr<PresureSendor> presureSensor_;
+    std::unique_ptr<PressureSendor> pressureSensor_;
 
     std::vector<std::unique_ptr<WaterCounter>> leafWaterCounters_;
     std::vector<std::unique_ptr<SoilSensor>> soilSensors_;

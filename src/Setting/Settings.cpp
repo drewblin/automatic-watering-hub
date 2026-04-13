@@ -77,9 +77,9 @@ std::vector<ValveSetting> Settings::getValveSetting()
     return vector;
 }
 
-PresureSensorSetting Settings::getPresureSensorSetting()
+PressureSensorSetting Settings::getPressureSensorSetting()
 {
-    return PresureSensorSetting(
+    return PressureSensorSetting(
         (uint8_t)doc_["pressureSensor"]["slaveAddress"]);
 }
 

@@ -29,11 +29,11 @@ WaterHub WaterHubBuilder::build(Settings settings)
         waterHub.addLeafWaterCounter(std::move(leafWaterCounter));
     }
 
-    auto presureSensor = std::make_unique<PresureSendor>(
+    auto pressureSensor = std::make_unique<PressureSendor>(
         modbusNode_,
         modbusSerialPort_,
-        settings.getPresureSensorSetting().getSlaveAddress());
-    waterHub.setPresureSensor(std::move(presureSensor));
+        settings.getPressureSensorSetting().getSlaveAddress());
+    waterHub.setPressureSensor(std::move(pressureSensor));
 
     std::unordered_map<std::uint8_t, SoilSensor *> soilSensorMap;
     for (SoilSensorSetting setting : settings.getSoilSensorSetting())
