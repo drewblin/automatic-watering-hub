@@ -11,7 +11,7 @@ public:
     void readData(float &humidity, float &temperature);
 
 private:
-    ModbusMaster &modbusNode;
-    HardwareSerial &serialPort;
-    uint8_t slaveAddress;
+    ModbusMaster &modbusNode_;
+    HardwareSerial &serialPort_;
+    uint8_t slaveAddress_;
 };

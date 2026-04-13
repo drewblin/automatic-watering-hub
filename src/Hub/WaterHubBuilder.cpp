@@ -4,8 +4,8 @@
 
 WaterHubBuilder::WaterHubBuilder(
     ModbusMaster &modbusNode,
-    HardwareSerial &modbusSerialPort) : modbusNode(modbusNode),
-                                        modbusSerialPort(modbusSerialPort)
+    HardwareSerial &modbusSerialPort) : modbusNode_(modbusNode),
+                                        modbusSerialPort_(modbusSerialPort)
 {
 }
 
@@ -30,8 +30,8 @@ WaterHub WaterHubBuilder::build(Settings settings)
     }
 
     auto presureSensor = std::make_unique<PresureSendor>(
-        modbusNode,
-        modbusSerialPort,
+        modbusNode_,
+        modbusSerialPort_,
         settings.getPresureSensorSetting().getSlaveAddress());
     waterHub.setPresureSensor(std::move(presureSensor));
 
@@ -39,8 +39,8 @@ WaterHub WaterHubBuilder::build(Settings settings)
     for (SoilSensorSetting setting : settings.getSoilSensorSetting())
     {
         auto soilSensor = std::make_unique<SoilSensor>(
-            modbusNode,
-            modbusSerialPort,
+            modbusNode_,
+            modbusSerialPort_,
             setting.getSlaveAddress());
         SoilSensor *soilSensorPtr = soilSensor.get();
 

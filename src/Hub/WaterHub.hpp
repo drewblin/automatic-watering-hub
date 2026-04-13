@@ -18,12 +18,12 @@ public:
     void addValve(std::unique_ptr<Valve> valve, SoilSensor* sensor);
 
 private:
-    std::unique_ptr<WaterCounter> magistralWaterCounter;
-    std::unique_ptr<PresureSendor> presureSensor;
+    std::unique_ptr<WaterCounter> magistralWaterCounter_;
+    std::unique_ptr<PresureSendor> presureSensor_;
 
-    std::vector<std::unique_ptr<WaterCounter>> leafWaterCounters;
-    std::vector<std::unique_ptr<SoilSensor>> soilSensors;
-    std::vector<std::unique_ptr<Valve>> valves;
+    std::vector<std::unique_ptr<WaterCounter>> leafWaterCounters_;
+    std::vector<std::unique_ptr<SoilSensor>> soilSensors_;
+    std::vector<std::unique_ptr<Valve>> valves_;
 
-    std::unordered_map<Valve*, SoilSensor*> valveToSoilSensorMap;
+    std::unordered_map<Valve*, SoilSensor*> valveToSoilSensorMap_;
 };

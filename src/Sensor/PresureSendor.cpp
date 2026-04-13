@@ -4,25 +4,25 @@
 PresureSendor::PresureSendor(
     ModbusMaster &modbusNode,
     HardwareSerial &serialPort,
-    uint8_t slaveAddress): modbusNode(modbusNode),
-                            serialPort(serialPort),
-                            slaveAddress(slaveAddress)
+    uint8_t slaveAddress): modbusNode_(modbusNode),
+                            serialPort_(serialPort),
+                            slaveAddress_(slaveAddress)
 {
 }
 
 float PresureSendor::readPresure()
 {
-    modbusNode.begin(slaveAddress, serialPort);
+    modbusNode_.begin(slaveAddress_, serialPort_);
 
-    uint8_t result = modbusNode.readHoldingRegisters(0x0002, 3);
-    if (result != modbusNode.ku8MBSuccess)
+    uint8_t result = modbusNode_.readHoldingRegisters(0x0002, 3);
+    if (result != modbusNode_.ku8MBSuccess)
     {
         return NAN;
     }
 
-    uint16_t unit = modbusNode.getResponseBuffer(0);
-    uint16_t decimal = modbusNode.getResponseBuffer(1);
-    int16_t presureRaw = (int16_t)modbusNode.getResponseBuffer(2);
+    uint16_t unit = modbusNode_.getResponseBuffer(0);
+    uint16_t decimal = modbusNode_.getResponseBuffer(1);
+    int16_t presureRaw = (int16_t)modbusNode_.getResponseBuffer(2);
 
     return convertToBar(presureRaw / 10^decimal, unit);
 }

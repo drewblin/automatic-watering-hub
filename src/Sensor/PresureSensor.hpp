@@ -10,9 +10,9 @@ public:
     float readPresure();
 
 private:
-    ModbusMaster &modbusNode;
-    HardwareSerial &serialPort;
-    uint8_t slaveAddress;
+    ModbusMaster &modbusNode_;
+    HardwareSerial &serialPort_;
+    uint8_t slaveAddress_;
 
     float convertToBar(float value, uint16_t unit);
 };

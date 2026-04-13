@@ -10,6 +10,6 @@ public:
     WaterHub build(Settings settings);
 
 private:
-    ModbusMaster &modbusNode;
-    HardwareSerial &modbusSerialPort;
+    ModbusMaster &modbusNode_;
+    HardwareSerial &modbusSerialPort_;
 };
