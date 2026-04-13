@@ -1,7 +1,7 @@
 #include "PressureSensor.hpp"
 #include <stdint.h>
 
-PressureSendor::PressureSendor(
+PressureSensor::PressureSensor(
     ModbusMaster &modbusNode,
     HardwareSerial &serialPort,
     uint8_t slaveAddress): modbusNode_(modbusNode),
@@ -10,7 +10,7 @@ PressureSendor::PressureSendor(
 {
 }
 
-float PressureSendor::readPressure()
+float PressureSensor::readPressure()
 {
     modbusNode_.begin(slaveAddress_, serialPort_);
 
@@ -27,7 +27,7 @@ float PressureSendor::readPressure()
     return convertToBar(pressureRaw / 10^decimal, unit);
 }
 
-float PressureSendor::convertToBar(float value, uint16_t unit)
+float PressureSensor::convertToBar(float value, uint16_t unit)
 {
     switch (unit)
     {

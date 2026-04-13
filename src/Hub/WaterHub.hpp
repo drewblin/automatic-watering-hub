@@ -12,18 +12,20 @@ public:
     WaterHub() = default;
 
     void setMagistralWaterCounter(std::unique_ptr<WaterCounter> counter);
-    void setPressureSensor(std::unique_ptr<PressureSendor> sensor);
+    void setPressureSensor(std::unique_ptr<PressureSensor> sensor);
     void addLeafWaterCounter(std::unique_ptr<WaterCounter> counter);
     void addSoilSensor(std::unique_ptr<SoilSensor> sensor);
-    void addValve(std::unique_ptr<Valve> valve, SoilSensor* sensor);
+    void addValve(std::unique_ptr<Valve> valve, SoilSensor *sensor);
+
+    void loop();
 
 private:
     std::unique_ptr<WaterCounter> magistralWaterCounter_;
-    std::unique_ptr<PressureSendor> pressureSensor_;
+    std::unique_ptr<PressureSensor> pressureSensor_;
 
     std::vector<std::unique_ptr<WaterCounter>> leafWaterCounters_;
     std::vector<std::unique_ptr<SoilSensor>> soilSensors_;
     std::vector<std::unique_ptr<Valve>> valves_;
 
-    std::unordered_map<Valve*, SoilSensor*> valveToSoilSensorMap_;
+    std::unordered_map<Valve *, SoilSensor *> valveToSoilSensorMap_;
 };

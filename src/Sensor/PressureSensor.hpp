@@ -1,10 +1,10 @@
 #include <stdint.h>
 #include "ModbusMaster.h"
 
-class PressureSendor
+class PressureSensor
 {
 public:
-    PressureSendor(ModbusMaster &modbusNode,
+    PressureSensor(ModbusMaster &modbusNode,
                   HardwareSerial &serialPort,
                   uint8_t slaveAddress);
     float readPressure();

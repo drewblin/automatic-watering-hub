@@ -29,7 +29,7 @@ WaterHub WaterHubBuilder::build(Settings settings)
         waterHub.addLeafWaterCounter(std::move(leafWaterCounter));
     }
 
-    auto pressureSensor = std::make_unique<PressureSendor>(
+    auto pressureSensor = std::make_unique<PressureSensor>(
         modbusNode_,
         modbusSerialPort_,
         settings.getPressureSensorSetting().getSlaveAddress());
