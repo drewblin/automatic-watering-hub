@@ -51,10 +51,21 @@ WaterHub WaterHubBuilder::build(Settings settings)
 
     for (ValveSetting setting : settings.getValveSetting())
     {
+        auto soilSensorIt = soilSensorMap.find(setting.getSoilSensorSlaveAddress());
+        if (soilSensorIt == soilSensorMap.end())
+        {
+            ESP_LOGE(
+                "WaterHubBuilder",
+                "Valve pin %u references missing soil sensor address %u",
+                setting.getPin(),
+                setting.getSoilSensorSlaveAddress());
+            continue;
+        }
+
         auto valve = std::make_unique<Valve>(setting.getPin());
         waterHub.addValve(
             std::move(valve),
-            soilSensorMap.find(setting.getSoilSensorSlaveAddress())->second);
+            soilSensorIt->second);
     }
 
     return waterHub;

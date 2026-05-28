@@ -8,12 +8,12 @@ Settings::Settings()
     {
       "pin": 12,
       "name": "Front lawn",
-      "soilSensorSlaveAddress": 2
+      "soilSensorSlaveAddress": 1
     },
     {
       "pin": 13,
       "name": "Backyard",
-      "soilSensorSlaveAddress": 3
+      "soilSensorSlaveAddress": 2
     }
   ],
   "pressureSensor": {
