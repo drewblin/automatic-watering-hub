@@ -28,11 +28,11 @@ void WaterHub::addValve(std::unique_ptr<Valve> valve, SoilSensor *sensor)
 
 void WaterHub::loop()
 {
-    Serial.print("Presure: ");
-    Serial.println(pressureSensor_.get()->readPressure());
+    // Serial.print("Presure: ");
+    // Serial.println(pressureSensor_.get()->readPressure());
 
-    Serial.print("Magistral water usage: ");
-    Serial.println(magistralWaterCounter_.get()->getLittersFromLastCall());
+    // Serial.print("Magistral water usage: ");
+    // Serial.println(magistralWaterCounter_.get()->getLittersFromLastCall());
 
     for (size_t i = 0; i < soilSensors_.size(); ++i)
     {
@@ -47,11 +47,11 @@ void WaterHub::loop()
         Serial.println("°C");
     }
 
-    for (size_t i = 0; i < leafWaterCounters_.size(); ++i)
-    {
-        Serial.print("Leaf water counter ");
-        Serial.print(i);
-        Serial.print(" usage: ");
-        Serial.println(leafWaterCounters_[i]->getLittersFromLastCall());
-    }
+    // for (size_t i = 0; i < leafWaterCounters_.size(); ++i)
+    // {
+    //     Serial.print("Leaf water counter ");
+    //     Serial.print(i);
+    //     Serial.print(" usage: ");
+    //     Serial.println(leafWaterCounters_[i]->getLittersFromLastCall());
+    // }
 }

@@ -32,13 +32,13 @@ void ApiServer::registerRoutes()
 void ApiServer::handleChangeDeviceAddress()
 {
     /*
-      curl -X POST http://<ESP32_IP>/api/modbus/device-address \
-        -H "Content-Type: application/json" \
-        -d '{
-          "currentAddress": 1,
-          "newAddress": 2,
-          "registerAddress": 0
-        }'
+curl -X POST http://192.168.0.104/api/modbus/device-address \
+-H "Content-Type: application/json" \
+-d '{
+    "currentAddress": 1,
+    "newAddress": 2,
+    "registerAddress": 0
+}'
     */
 
     if (!server_.hasArg("plain"))

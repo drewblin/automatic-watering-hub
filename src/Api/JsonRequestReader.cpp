@@ -5,7 +5,7 @@
 
 bool JsonRequestReader::readRequiredUint8(JsonVariantConst json, const char *field, uint8_t &value, String &error)
 {
-    if (!json[field])
+    if (json[field].isNull())
     {
         error = String("Missing field: ") + field;
         return false;
@@ -22,7 +22,7 @@ bool JsonRequestReader::readRequiredUint8(JsonVariantConst json, const char *fie
 
 bool JsonRequestReader::readRequiredUint16(JsonVariantConst json, const char *field, uint16_t &value, String &error)
 {
-    if (!json[field])
+    if (json[field].isNull())
     {
         error = String("Missing field: ") + field;
         return false;

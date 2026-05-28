@@ -17,7 +17,7 @@ Settings::Settings()
     }
   ],
   "pressureSensor": {
-    "slaveAddress": 1
+    "slaveAddress": 3
   },
   "magistralWaterCounterSetting": {
     "pin": 27,
@@ -38,11 +38,11 @@ Settings::Settings()
   ],
   "soilSensorSettings": [
     {
-      "slaveAddress": 2,
+      "slaveAddress": 1,
       "name": "Sensor 1"
     },
     {
-      "slaveAddress": 3,
+      "slaveAddress": 2,
       "name": "Sensor 2"
     }
   ]
