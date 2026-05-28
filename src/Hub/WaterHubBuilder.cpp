@@ -16,16 +16,14 @@ WaterHub WaterHubBuilder::build(Settings settings)
     auto magistralWaterCounterSetting = settings.getMagistralWaterCounterSetting();
     auto magistralWaterCounter = std::make_unique<WaterCounter>(
         magistralWaterCounterSetting.getPin(),
-        magistralWaterCounterSetting.getLitersPerTick()
-    );
+        magistralWaterCounterSetting.getLitersPerTick());
     waterHub.setMagistralWaterCounter(std::move(magistralWaterCounter));
 
     for (WaterCounterSetting setting : settings.getLeafWaterCounterSetting())
     {
         auto leafWaterCounter = std::make_unique<WaterCounter>(
             setting.getPin(),
-            setting.getLitersPerTick()
-        );
+            setting.getLitersPerTick());
         waterHub.addLeafWaterCounter(std::move(leafWaterCounter));
     }
 
@@ -59,6 +57,7 @@ WaterHub WaterHubBuilder::build(Settings settings)
                 "Valve pin %u references missing soil sensor address %u",
                 setting.getPin(),
                 setting.getSoilSensorSlaveAddress());
+
             continue;
         }
 

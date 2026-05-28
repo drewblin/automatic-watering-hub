@@ -37,7 +37,7 @@ curl -X POST http://192.168.0.104/api/modbus/device-address \
 -d '{
     "currentAddress": 1,
     "newAddress": 2,
-    "registerAddress": 0
+    "registerAddress": 0 (48 for soil sensor, ? for pressure sensor)
 }'
     */
 

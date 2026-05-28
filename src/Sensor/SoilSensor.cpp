@@ -17,6 +17,12 @@ void SoilSensor::readData(float &humidity, float &temperature)
     uint8_t result = modbusNode_.readHoldingRegisters(0x0000, 2);
     if (result != modbusNode_.ku8MBSuccess)
     {
+        ESP_LOGE(
+            "SoilSensor",
+            "Slave address %u returns mobdus result 0x%u",
+            slaveAddress_,
+            result);
+
         humidity = NAN;
         temperature = NAN;
 
