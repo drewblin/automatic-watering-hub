@@ -37,7 +37,9 @@ curl -X POST http://192.168.0.104/api/modbus/device-address \
 -d '{
     "currentAddress": 1,
     "newAddress": 2,
-    "registerAddress": 0 (48 for soil sensor, ? for pressure sensor)
+    "registerAddress": 0 (48 for soil sensor, 0 for pressure sensor),
+    "saveRegisterAddress": 15, (null for soil sensor, 15 for pressure sensor)
+    "saveValue": 0 (null for soil sensor, 0 for pressure sensor)
 }'
     */
 
@@ -59,17 +61,38 @@ curl -X POST http://192.168.0.104/api/modbus/device-address \
     uint8_t currentAddress = 0;
     uint8_t newAddress = 0;
     uint16_t registerAddress = 0;
+    uint16_t saveRegisterAddress = 0;
+    uint16_t saveValue = 0;
+    bool save = false;
+    bool hasSaveRegisterAddress = false;
+    bool hasSaveValue = false;
     JsonVariantConst json = request.as<JsonVariantConst>();
 
     if (!JsonRequestReader::readRequiredUint8(json, "currentAddress", currentAddress, error) ||
         !JsonRequestReader::readRequiredUint8(json, "newAddress", newAddress, error) ||
-        !JsonRequestReader::readRequiredUint16(json, "registerAddress", registerAddress, error))
+        !JsonRequestReader::readRequiredUint16(json, "registerAddress", registerAddress, error) ||
+        !JsonRequestReader::readOptionalUint16(json, "saveRegisterAddress", saveRegisterAddress, hasSaveRegisterAddress, error) ||
+        !JsonRequestReader::readOptionalUint16(json, "saveValue", saveValue, hasSaveValue, error))
     {
         sendError(400, error);
         return;
     }
 
-    uint8_t status = changeDeviceAddressCommand_.execute(currentAddress, newAddress, registerAddress);
+    if (hasSaveRegisterAddress != hasSaveValue)
+    {
+        sendError(400, "saveRegisterAddress and saveValue must be provided together");
+        return;
+    }
+
+    save = hasSaveRegisterAddress && hasSaveValue;
+
+    uint8_t status = changeDeviceAddressCommand_.execute(
+        currentAddress,
+        newAddress,
+        registerAddress,
+        save,
+        saveRegisterAddress,
+        saveValue);
 
     JsonDocument response;
     response["success"] = status == ChangeDeviceAddressCommand::SuccessStatus;
@@ -77,6 +100,12 @@ curl -X POST http://192.168.0.104/api/modbus/device-address \
     response["currentAddress"] = currentAddress;
     response["newAddress"] = newAddress;
     response["registerAddress"] = registerAddress;
+    response["save"] = save;
+    if (save)
+    {
+        response["saveRegisterAddress"] = saveRegisterAddress;
+        response["saveValue"] = saveValue;
+    }
 
     String payload;
     serializeJson(response, payload);

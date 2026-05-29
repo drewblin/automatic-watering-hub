@@ -8,16 +8,16 @@ Settings::Settings()
     {
       "pin": 12,
       "name": "Front lawn",
-      "soilSensorSlaveAddress": 1
+      "soilSensorSlaveAddress": 2
     },
     {
       "pin": 13,
       "name": "Backyard",
-      "soilSensorSlaveAddress": 2
+      "soilSensorSlaveAddress": 3
     }
   ],
   "pressureSensor": {
-    "slaveAddress": 3
+    "slaveAddress": 1
   },
   "magistralWaterCounterSetting": {
     "pin": 27,
@@ -38,11 +38,11 @@ Settings::Settings()
   ],
   "soilSensorSettings": [
     {
-      "slaveAddress": 1,
+      "slaveAddress": 2,
       "name": "Sensor 1"
     },
     {
-      "slaveAddress": 2,
+      "slaveAddress": 3,
       "name": "Sensor 2"
     }
   ]

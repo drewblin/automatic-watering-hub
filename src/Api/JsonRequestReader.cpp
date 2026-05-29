@@ -37,6 +37,24 @@ bool JsonRequestReader::readRequiredUint16(JsonVariantConst json, const char *fi
     return true;
 }
 
+bool JsonRequestReader::readOptionalUint16(JsonVariantConst json, const char *field, uint16_t &value, bool &present, String &error)
+{
+    if (json[field].isNull())
+    {
+        present = false;
+        return true;
+    }
+
+    if (!parseUint16(json[field], value))
+    {
+        error = String("Invalid uint16 field: ") + field;
+        return false;
+    }
+
+    present = true;
+    return true;
+}
+
 bool JsonRequestReader::parseUint8(JsonVariantConst source, uint8_t &value)
 {
     uint16_t parsed = 0;
