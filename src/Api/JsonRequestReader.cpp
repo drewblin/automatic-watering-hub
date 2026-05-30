@@ -1,8 +1,5 @@
 #include "JsonRequestReader.hpp"
 
-#include <cerrno>
-#include <cstdlib>
-
 bool JsonRequestReader::readRequiredUint8(JsonVariantConst json, const char *field, uint8_t &value, String &error)
 {
     if (json[field].isNull())
@@ -98,22 +95,7 @@ bool JsonRequestReader::parseUint16(JsonVariantConst source, uint16_t &value)
         return true;
     }
 
-    if (!source.is<const char *>())
-    {
-        return false;
-    }
-
-    const char *raw = source.as<const char *>();
-    char *end = nullptr;
-    errno = 0;
-    unsigned long parsed = strtoul(raw, &end, 0);
-    if (errno != 0 || end == raw || *end != '\0' || parsed > 0xFFFF)
-    {
-        return false;
-    }
-
-    value = static_cast<uint16_t>(parsed);
-    return true;
+    return false;
 }
 
 bool JsonRequestReader::parseUint32(JsonVariantConst source, uint32_t &value)
@@ -124,20 +106,5 @@ bool JsonRequestReader::parseUint32(JsonVariantConst source, uint32_t &value)
         return true;
     }
 
-    if (!source.is<const char *>())
-    {
-        return false;
-    }
-
-    const char *raw = source.as<const char *>();
-    char *end = nullptr;
-    errno = 0;
-    unsigned long parsed = strtoul(raw, &end, 0);
-    if (errno != 0 || end == raw || *end != '\0' || parsed > UINT32_MAX)
-    {
-        return false;
-    }
-
-    value = static_cast<uint32_t>(parsed);
-    return true;
+    return false;
 }
