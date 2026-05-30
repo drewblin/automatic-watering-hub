@@ -31,6 +31,16 @@ void WaterHub::addValve(std::unique_ptr<Valve> valve, SoilSensor *sensor)
     valveToSoilSensorMap_[valves_.back().get()] = sensor;
 }
 
+void WaterHub::begin()
+{
+    valveCloseTimesMs_.clear();
+
+    for (const auto &valve : valves_)
+    {
+        valve->close();
+    }
+}
+
 bool WaterHub::openValveForTime(uint8_t pin, uint32_t seconds)
 {
     assert(seconds <= INT32_MAX / 1000);

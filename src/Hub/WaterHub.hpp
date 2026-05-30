@@ -20,6 +20,7 @@ public:
     void addSoilSensor(std::unique_ptr<SoilSensor> sensor);
     void addValve(std::unique_ptr<Valve> valve, SoilSensor *sensor);
 
+    void begin();
     bool openValveForTime(uint8_t pin, uint32_t seconds);
     void loop();
 
