@@ -4,11 +4,13 @@
 #include "PressureSensorSetting.hpp"
 #include "WaterCounterSetting.hpp"
 #include "SoilSensorSetting.hpp"
+#include "GlobalSettings.hpp"
 
 class Settings
 {
 public:
     Settings();
+    GlobalSettings getGlobalSettings();
     std::vector<ValveSetting> getValveSetting();
     PressureSensorSetting getPressureSensorSetting();
     WaterCounterSetting getMagistralWaterCounterSetting();

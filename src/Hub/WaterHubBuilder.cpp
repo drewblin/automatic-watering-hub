@@ -11,7 +11,7 @@ WaterHubBuilder::WaterHubBuilder(
 
 WaterHub WaterHubBuilder::build(Settings settings)
 {
-    WaterHub waterHub = WaterHub();
+    WaterHub waterHub = WaterHub(settings.getGlobalSettings());
 
     auto magistralWaterCounterSetting = settings.getMagistralWaterCounterSetting();
     auto magistralWaterCounter = std::make_unique<WaterCounter>(

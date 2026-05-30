@@ -4,6 +4,9 @@ Settings::Settings()
 {
     String payload = R"json(
 {
+  "globalSettings": {
+    "waterCounterReadIntervalSeconds": 5
+  },
   "valveSettings": [
     {
       "pin": 12,
@@ -55,6 +58,12 @@ Settings::Settings()
         ESP_LOGE("Settings", "Failed to parse JSON: %s", err.c_str());
         return;
     }
+}
+
+GlobalSettings Settings::getGlobalSettings()
+{
+    return GlobalSettings{
+        (uint32_t)doc_["globalSettings"]["waterCounterReadIntervalSeconds"]};
 }
 
 std::vector<ValveSetting> Settings::getValveSetting()

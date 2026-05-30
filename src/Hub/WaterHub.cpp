@@ -1,5 +1,9 @@
 #include "WaterHub.hpp"
 
+WaterHub::WaterHub(GlobalSettings globalSettings) : globalSettings_(globalSettings)
+{
+}
+
 void WaterHub::setMagistralWaterCounter(std::unique_ptr<WaterCounter> counter)
 {
     magistralWaterCounter_ = std::move(counter);
@@ -28,30 +32,46 @@ void WaterHub::addValve(std::unique_ptr<Valve> valve, SoilSensor *sensor)
 
 void WaterHub::loop()
 {
-    // Serial.print("Presure: ");
-    // Serial.println(pressureSensor_.get()->readPressure());
+    Serial.print("Pressure: ");
+    Serial.println(pressureSensor_.get()->readPressure());
 
-    // Serial.print("Magistral water usage: ");
-    // Serial.println(magistralWaterCounter_.get()->getLitersFromLastCall());
+    for (size_t i = 0; i < soilSensors_.size(); ++i)
+    {
+        float humidity, temperature;
+        soilSensors_[i]->readData(humidity, temperature);
+        Serial.print("Soil sensor ");
+        Serial.print(i);
+        Serial.print(" - Humidity: ");
+        Serial.print(humidity);
+        Serial.print("%, Temperature: ");
+        Serial.print(temperature);
+        Serial.println("°C");
+    }
 
-    // for (size_t i = 0; i < soilSensors_.size(); ++i)
-    // {
-    //     float humidity, temperature;
-    //     soilSensors_[i]->readData(humidity, temperature);
-    //     Serial.print("Soil sensor ");
-    //     Serial.print(i);
-    //     Serial.print(" - Humidity: ");
-    //     Serial.print(humidity);
-    //     Serial.print("%, Temperature: ");
-    //     Serial.print(temperature);
-    //     Serial.println("°C");
-    // }
+    readWaterCounters();
+}
 
-    // for (size_t i = 0; i < leafWaterCounters_.size(); ++i)
-    // {
-    //     Serial.print("Leaf water counter ");
-    //     Serial.print(i);
-    //     Serial.print(" usage: ");
-    //     Serial.println(leafWaterCounters_[i]->getLittersFromLastCall());
-    // }
+void WaterHub::readWaterCounters()
+{
+    uint32_t currentTimeMs = millis();
+    uint32_t waterCounterReadIntervalMs =
+        globalSettings_.waterCounterReadIntervalSeconds * 1000;
+
+    if (currentTimeMs - lastWaterCounterReadTimeMs_ < waterCounterReadIntervalMs)
+    {
+        return;
+    }
+
+    lastWaterCounterReadTimeMs_ = currentTimeMs;
+
+    Serial.print("Magistral water usage: ");
+    Serial.println(magistralWaterCounter_.get()->getLitersFromLastCall());
+
+    for (size_t i = 0; i < leafWaterCounters_.size(); ++i)
+    {
+        Serial.print("Leaf water counter ");
+        Serial.print(i);
+        Serial.print(" usage: ");
+        Serial.println(leafWaterCounters_[i]->getLitersFromLastCall());
+    }
 }
