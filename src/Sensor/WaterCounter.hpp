@@ -6,10 +6,10 @@ class WaterCounter
 {
 public:
     WaterCounter(uint8_t pin, float litersPerTick);
-    float getLittersFromLastCall();
+    float getLitersFromLastCall();
 
 private:
     pcnt_unit_handle_t pcntUnit_ = NULL;
     float litersPerTick_;
-    uint32_t lastTickCount_;
+    uint32_t lastTickCount_ = 0;
 };

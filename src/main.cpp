@@ -15,7 +15,6 @@ void setup()
 {
     Serial.begin(115200);
 
-    // todo check pins
     Serial2.begin(9600, SERIAL_8N1, 16, 17);
 
     wifiConnection.begin();
@@ -26,4 +25,6 @@ void loop()
 {
     apiServer.handleClient();
     waterHub.loop();
+
+    delay(500);
 }

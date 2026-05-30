@@ -20,18 +20,18 @@ Settings::Settings()
     "slaveAddress": 1
   },
   "magistralWaterCounterSetting": {
-    "pin": 27,
+    "pin": 34,
     "name": "Main counter",
     "litersPerTick": 0.5
   },
   "leafWaterCounterSettings": [
     {
-      "pin": 14,
+      "pin": 35,
       "name": "Zone 1 counter",
       "litersPerTick": 0.3
     },
     {
-      "pin": 15,
+      "pin": 36,
       "name": "Zone 2 counter",
       "litersPerTick": 0.25
     }

@@ -4,11 +4,11 @@ WaterCounter::WaterCounter(uint8_t pin, float litersPerTick)
 {
     litersPerTick_ = litersPerTick;
 
-    pinMode(pin, INPUT_PULLDOWN);
+    pinMode(pin, INPUT);
 
     pcnt_unit_config_t unitConfig = {
-        .low_limit = -(int)(sizeof(uint8_t) * 8),
-        .high_limit = (int)(sizeof(uint8_t) * 8),
+        .low_limit = INT16_MIN,
+        .high_limit = INT16_MAX,
         .intr_priority = 0,
         .flags = {
             .accum_count = 1,
@@ -32,8 +32,8 @@ WaterCounter::WaterCounter(uint8_t pin, float litersPerTick)
 
     ESP_ERROR_CHECK(pcnt_channel_set_edge_action(
         pcntChannel,
-        PCNT_CHANNEL_EDGE_ACTION_INCREASE,
-        PCNT_CHANNEL_EDGE_ACTION_HOLD));
+        PCNT_CHANNEL_EDGE_ACTION_HOLD,
+        PCNT_CHANNEL_EDGE_ACTION_INCREASE));
 
     pcnt_event_callbacks_t callbackConfig = {};
     ESP_ERROR_CHECK(pcnt_unit_register_event_callbacks(pcntUnit_, &callbackConfig, nullptr));
@@ -43,14 +43,14 @@ WaterCounter::WaterCounter(uint8_t pin, float litersPerTick)
     ESP_ERROR_CHECK(pcnt_unit_start(pcntUnit_));
 }
 
-float WaterCounter::getLittersFromLastCall()
+float WaterCounter::getLitersFromLastCall()
 {
     int tickCount = 0;
     pcnt_unit_get_count(pcntUnit_, &tickCount);
 
     int delta = tickCount - lastTickCount_;
 
-    if (tickCount > 2000000000)
+    if (tickCount > INT16_MAX - 1000)
     {
         pcnt_unit_clear_count(pcntUnit_);
         tickCount = 0;
