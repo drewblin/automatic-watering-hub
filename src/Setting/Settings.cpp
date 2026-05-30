@@ -5,7 +5,9 @@ Settings::Settings()
     String payload = R"json(
 {
   "globalSettings": {
-    "waterCounterReadIntervalSeconds": 5
+    "waterCounterReadIntervalSeconds": 5,
+    "pressureSensorReadIntervalSeconds": 5,
+    "soilSensorReadIntervalSeconds": 5
   },
   "valveSettings": [
     {
@@ -63,7 +65,9 @@ Settings::Settings()
 GlobalSettings Settings::getGlobalSettings()
 {
     return GlobalSettings{
-        (uint32_t)doc_["globalSettings"]["waterCounterReadIntervalSeconds"]};
+        (uint32_t)doc_["globalSettings"]["waterCounterReadIntervalSeconds"],
+        (uint32_t)doc_["globalSettings"]["pressureSensorReadIntervalSeconds"],
+        (uint32_t)doc_["globalSettings"]["soilSensorReadIntervalSeconds"]};
 }
 
 std::vector<ValveSetting> Settings::getValveSetting()

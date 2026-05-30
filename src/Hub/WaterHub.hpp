@@ -32,6 +32,10 @@ private:
 
     GlobalSettings globalSettings_;
     uint32_t lastWaterCounterReadTimeMs_ = 0;
+    uint32_t lastPressureSensorReadTimeMs_ = 0;
+    uint32_t lastSoilSensorReadTimeMs_ = 0;
 
     void readWaterCounters();
+    void readPressureSensor();
+    void readSoilSensors();
 };

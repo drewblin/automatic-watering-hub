@@ -32,22 +32,8 @@ void WaterHub::addValve(std::unique_ptr<Valve> valve, SoilSensor *sensor)
 
 void WaterHub::loop()
 {
-    Serial.print("Pressure: ");
-    Serial.println(pressureSensor_.get()->readPressure());
-
-    for (size_t i = 0; i < soilSensors_.size(); ++i)
-    {
-        float humidity, temperature;
-        soilSensors_[i]->readData(humidity, temperature);
-        Serial.print("Soil sensor ");
-        Serial.print(i);
-        Serial.print(" - Humidity: ");
-        Serial.print(humidity);
-        Serial.print("%, Temperature: ");
-        Serial.print(temperature);
-        Serial.println("°C");
-    }
-
+    readPressureSensor();
+    readSoilSensors();
     readWaterCounters();
 }
 
@@ -73,5 +59,49 @@ void WaterHub::readWaterCounters()
         Serial.print(i);
         Serial.print(" usage: ");
         Serial.println(leafWaterCounters_[i]->getLitersFromLastCall());
+    }
+}
+
+void WaterHub::readPressureSensor()
+{
+    uint32_t currentTimeMs = millis();
+    uint32_t pressureSensorReadIntervalMs =
+        globalSettings_.pressureSensorReadIntervalSeconds * 1000;
+
+    if (currentTimeMs - lastPressureSensorReadTimeMs_ < pressureSensorReadIntervalMs)
+    {
+        return;
+    }
+
+    lastPressureSensorReadTimeMs_ = currentTimeMs;
+
+    Serial.print("Pressure: ");
+    Serial.println(pressureSensor_.get()->readPressure());
+}
+
+void WaterHub::readSoilSensors()
+{
+    uint32_t currentTimeMs = millis();
+    uint32_t soilSensorReadIntervalMs =
+        globalSettings_.soilSensorReadIntervalSeconds * 1000;
+
+    if (currentTimeMs - lastSoilSensorReadTimeMs_ < soilSensorReadIntervalMs)
+    {
+        return;
+    }
+
+    lastSoilSensorReadTimeMs_ = currentTimeMs;
+
+    for (size_t i = 0; i < soilSensors_.size(); ++i)
+    {
+        float humidity, temperature;
+        soilSensors_[i]->readData(humidity, temperature);
+        Serial.print("Soil sensor ");
+        Serial.print(i);
+        Serial.print(" - Humidity: ");
+        Serial.print(humidity);
+        Serial.print("%, Temperature: ");
+        Serial.print(temperature);
+        Serial.println("°C");
     }
 }
