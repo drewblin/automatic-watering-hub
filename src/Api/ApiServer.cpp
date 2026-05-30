@@ -51,17 +51,9 @@ curl -X POST http://192.168.0.104/api/modbus/device-address \
 }'
     */
 
-    if (!server_.hasArg("plain"))
-    {
-        sendError(400, "Missing JSON body");
-        return;
-    }
-
     JsonDocument request;
-    DeserializationError parseError = deserializeJson(request, server_.arg("plain"));
-    if (parseError)
+    if (!readJsonRequest(request))
     {
-        sendError(400, String("Invalid JSON: ") + parseError.c_str());
         return;
     }
 
@@ -103,7 +95,6 @@ curl -X POST http://192.168.0.104/api/modbus/device-address \
         saveValue);
 
     JsonDocument response;
-    response["success"] = status == ChangeDeviceAddressCommand::SuccessStatus;
     response["status"] = status;
     response["currentAddress"] = currentAddress;
     response["newAddress"] = newAddress;
@@ -115,24 +106,20 @@ curl -X POST http://192.168.0.104/api/modbus/device-address \
         response["saveValue"] = saveValue;
     }
 
-    String payload;
-    serializeJson(response, payload);
-    sendJson(status == ChangeDeviceAddressCommand::SuccessStatus ? 200 : 502, payload);
+    if (status != ChangeDeviceAddressCommand::SuccessStatus)
+    {
+        sendResponse(502, false, &response, "Failed to change device address");
+        return;
+    }
+
+    sendSuccess(200, response);
 }
 
 void ApiServer::handleOpenValveForTime()
 {
-    if (!server_.hasArg("plain"))
-    {
-        sendError(400, "Missing JSON body");
-        return;
-    }
-
     JsonDocument request;
-    DeserializationError parseError = deserializeJson(request, server_.arg("plain"));
-    if (parseError)
+    if (!readJsonRequest(request))
     {
-        sendError(400, String("Invalid JSON: ") + parseError.c_str());
         return;
     }
 
@@ -149,7 +136,7 @@ void ApiServer::handleOpenValveForTime()
     }
 
     if (seconds > settings_.getGlobalSettings().maximumManualValveOpenTimeSeconds ||
-        seconds > UINT32_MAX / 1000)
+        seconds > INT32_MAX / 1000)
     {
         sendError(400, "Valve open time exceeds configured limit");
         return;
@@ -162,27 +149,63 @@ void ApiServer::handleOpenValveForTime()
     }
 
     JsonDocument response;
-    response["success"] = true;
     response["pin"] = pin;
     response["seconds"] = seconds;
 
-    String payload;
-    serializeJson(response, payload);
-    sendJson(200, payload);
+    sendSuccess(200, response);
 }
 
-void ApiServer::sendJson(uint16_t statusCode, const String &payload)
+bool ApiServer::readJsonRequest(JsonDocument &request)
 {
+    if (!server_.hasArg("plain"))
+    {
+        sendError(400, "Missing JSON body");
+        return false;
+    }
+
+    DeserializationError parseError = deserializeJson(request, server_.arg("plain"));
+    if (parseError)
+    {
+        sendError(400, String("Invalid JSON: ") + parseError.c_str());
+        return false;
+    }
+
+    return true;
+}
+
+void ApiServer::sendResponse(uint16_t statusCode, bool success, const JsonDocument *responseData, const String &error)
+{
+    JsonDocument response;
+    response["success"] = success;
+    if (responseData != nullptr)
+    {
+        response["data"] = responseData->as<JsonVariantConst>();
+    }
+    else
+    {
+        response["data"] = nullptr;
+    }
+
+    if (error.length() > 0)
+    {
+        response["error"] = error;
+    }
+    else
+    {
+        response["error"] = nullptr;
+    }
+
+    String payload;
+    serializeJson(response, payload);
     server_.send(statusCode, "application/json", payload);
+}
+
+void ApiServer::sendSuccess(uint16_t statusCode, const JsonDocument &responseData)
+{
+    sendResponse(statusCode, true, &responseData, "");
 }
 
 void ApiServer::sendError(uint16_t statusCode, const String &message)
 {
-    JsonDocument response;
-    response["success"] = false;
-    response["error"] = message;
-
-    String payload;
-    serializeJson(response, payload);
-    sendJson(statusCode, payload);
+    sendResponse(statusCode, false, nullptr, message);
 }

@@ -33,7 +33,7 @@ void WaterHub::addValve(std::unique_ptr<Valve> valve, SoilSensor *sensor)
 
 bool WaterHub::openValveForTime(uint8_t pin, uint32_t seconds)
 {
-    assert(seconds <= UINT32_MAX / 1000);
+    assert(seconds <= INT32_MAX / 1000);
 
     for (const auto &valve : valves_)
     {

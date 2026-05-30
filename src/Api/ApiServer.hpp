@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ArduinoJson.h"
 #include "Command/ChangeDeviceAddressCommand.hpp"
 #include "Command/OpenValveForTimeCommand.hpp"
 #include "Setting/Settings.hpp"
@@ -21,7 +22,9 @@ private:
     void registerRoutes();
     void handleChangeDeviceAddress();
     void handleOpenValveForTime();
-    void sendJson(uint16_t statusCode, const String &payload);
+    bool readJsonRequest(JsonDocument &request);
+    void sendResponse(uint16_t statusCode, bool success, const JsonDocument *data, const String &error);
+    void sendSuccess(uint16_t statusCode, const JsonDocument &data);
     void sendError(uint16_t statusCode, const String &message);
 
     ChangeDeviceAddressCommand changeDeviceAddressCommand_;
