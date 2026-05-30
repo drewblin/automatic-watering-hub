@@ -7,7 +7,8 @@ Settings::Settings()
   "globalSettings": {
     "waterCounterReadIntervalSeconds": 5,
     "pressureSensorReadIntervalSeconds": 5,
-    "soilSensorReadIntervalSeconds": 5
+    "soilSensorReadIntervalSeconds": 5,
+    "maximumManualValveOpenTimeSeconds": 3600
   },
   "valveSettings": [
     {
@@ -67,7 +68,8 @@ GlobalSettings Settings::getGlobalSettings()
     return GlobalSettings{
         (uint32_t)doc_["globalSettings"]["waterCounterReadIntervalSeconds"],
         (uint32_t)doc_["globalSettings"]["pressureSensorReadIntervalSeconds"],
-        (uint32_t)doc_["globalSettings"]["soilSensorReadIntervalSeconds"]};
+        (uint32_t)doc_["globalSettings"]["soilSensorReadIntervalSeconds"],
+        (uint32_t)doc_["globalSettings"]["maximumManualValveOpenTimeSeconds"]};
 }
 
 std::vector<ValveSetting> Settings::getValveSetting()

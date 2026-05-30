@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include "ArduinoJson.h"
 #include "ValveSetting.hpp"

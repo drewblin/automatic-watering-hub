@@ -1,3 +1,4 @@
+#include <cassert>
 #include "WaterHub.hpp"
 
 WaterHub::WaterHub(GlobalSettings globalSettings) : globalSettings_(globalSettings)
@@ -30,11 +31,50 @@ void WaterHub::addValve(std::unique_ptr<Valve> valve, SoilSensor *sensor)
     valveToSoilSensorMap_[valves_.back().get()] = sensor;
 }
 
+bool WaterHub::openValveForTime(uint8_t pin, uint32_t seconds)
+{
+    assert(seconds <= UINT32_MAX / 1000);
+
+    for (const auto &valve : valves_)
+    {
+        if (valve->getPin() != pin)
+        {
+            continue;
+        }
+
+        valve->open();
+        valveCloseTimesMs_[valve.get()] = millis() + seconds * 1000;
+
+        return true;
+    }
+
+    return false;
+}
+
 void WaterHub::loop()
 {
+    closeExpiredValves();
+
     readPressureSensor();
     readSoilSensors();
     readWaterCounters();
+}
+
+void WaterHub::closeExpiredValves()
+{
+    uint32_t currentTimeMs = millis();
+
+    for (auto it = valveCloseTimesMs_.begin(); it != valveCloseTimesMs_.end();)
+    {
+        if (static_cast<int32_t>(currentTimeMs - it->second) < 0)
+        {
+            ++it;
+            continue;
+        }
+
+        it->first->close();
+        it = valveCloseTimesMs_.erase(it);
+    }
 }
 
 void WaterHub::readWaterCounters()

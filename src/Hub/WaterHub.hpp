@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include <memory>
 #include <unordered_map>
@@ -18,6 +20,7 @@ public:
     void addSoilSensor(std::unique_ptr<SoilSensor> sensor);
     void addValve(std::unique_ptr<Valve> valve, SoilSensor *sensor);
 
+    bool openValveForTime(uint8_t pin, uint32_t seconds);
     void loop();
 
 private:
@@ -29,6 +32,7 @@ private:
     std::vector<std::unique_ptr<Valve>> valves_;
 
     std::unordered_map<Valve *, SoilSensor *> valveToSoilSensorMap_;
+    std::unordered_map<Valve *, uint32_t> valveCloseTimesMs_;
 
     GlobalSettings globalSettings_;
     uint32_t lastWaterCounterReadTimeMs_ = 0;
@@ -38,4 +42,5 @@ private:
     void readWaterCounters();
     void readPressureSensor();
     void readSoilSensors();
+    void closeExpiredValves();
 };

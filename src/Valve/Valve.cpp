@@ -15,3 +15,8 @@ void Valve::close()
 {
     digitalWrite(pin_, LOW);
 }
+
+uint8_t Valve::getPin() const
+{
+    return pin_;
+}

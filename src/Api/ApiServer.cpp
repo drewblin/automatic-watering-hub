@@ -3,8 +3,14 @@
 #include "ArduinoJson.h"
 #include "JsonRequestReader.hpp"
 
-ApiServer::ApiServer(ChangeDeviceAddressCommand changeDeviceAddressCommand, uint16_t port)
+ApiServer::ApiServer(
+    ChangeDeviceAddressCommand changeDeviceAddressCommand,
+    OpenValveForTimeCommand openValveForTimeCommand,
+    Settings &settings,
+    uint16_t port)
     : changeDeviceAddressCommand_(changeDeviceAddressCommand),
+      openValveForTimeCommand_(openValveForTimeCommand),
+      settings_(settings),
       server_(port)
 {
 }
@@ -24,6 +30,8 @@ void ApiServer::registerRoutes()
 {
     server_.on("/api/modbus/device-address", HTTP_POST, [this]()
                { handleChangeDeviceAddress(); });
+    server_.on("/api/valves/open-for-time", HTTP_POST, [this]()
+               { handleOpenValveForTime(); });
 
     server_.onNotFound([this]()
                        { sendError(404, "Not found"); });
@@ -110,6 +118,57 @@ curl -X POST http://192.168.0.104/api/modbus/device-address \
     String payload;
     serializeJson(response, payload);
     sendJson(status == ChangeDeviceAddressCommand::SuccessStatus ? 200 : 502, payload);
+}
+
+void ApiServer::handleOpenValveForTime()
+{
+    if (!server_.hasArg("plain"))
+    {
+        sendError(400, "Missing JSON body");
+        return;
+    }
+
+    JsonDocument request;
+    DeserializationError parseError = deserializeJson(request, server_.arg("plain"));
+    if (parseError)
+    {
+        sendError(400, String("Invalid JSON: ") + parseError.c_str());
+        return;
+    }
+
+    String error;
+    uint8_t pin = 0;
+    uint32_t seconds = 0;
+    JsonVariantConst json = request.as<JsonVariantConst>();
+
+    if (!JsonRequestReader::readRequiredUint8(json, "pin", pin, error) ||
+        !JsonRequestReader::readRequiredUint32(json, "seconds", seconds, error))
+    {
+        sendError(400, error);
+        return;
+    }
+
+    if (seconds > settings_.getGlobalSettings().maximumManualValveOpenTimeSeconds ||
+        seconds > UINT32_MAX / 1000)
+    {
+        sendError(400, "Valve open time exceeds configured limit");
+        return;
+    }
+
+    if (!openValveForTimeCommand_.execute(pin, seconds))
+    {
+        sendError(404, "Valve not found");
+        return;
+    }
+
+    JsonDocument response;
+    response["success"] = true;
+    response["pin"] = pin;
+    response["seconds"] = seconds;
+
+    String payload;
+    serializeJson(response, payload);
+    sendJson(200, payload);
 }
 
 void ApiServer::sendJson(uint16_t statusCode, const String &payload)

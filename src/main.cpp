@@ -6,9 +6,10 @@ WifiConnection wifiConnection;
 ModbusMaster modbusNode;
 
 WaterHubBuilder waterHubBuilder(modbusNode, Serial2);
-WaterHub waterHub = waterHubBuilder.build(Settings());
+Settings settings;
+WaterHub waterHub = waterHubBuilder.build(settings);
 
-ApiServerBuilder apiServerBuilder(modbusNode, Serial2);
+ApiServerBuilder apiServerBuilder(modbusNode, Serial2, waterHub, settings);
 ApiServer apiServer = apiServerBuilder.build();
 
 void setup()
@@ -25,6 +26,4 @@ void loop()
 {
     apiServer.handleClient();
     waterHub.loop();
-
-    delay(500);
 }
