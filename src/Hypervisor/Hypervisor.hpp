@@ -17,17 +17,19 @@ private:
 
     WaterHub &waterHub_;
 
-    uint32_t magistralWaterCounterReadingRevision_ = 0;
+    uint32_t unauthorizedFlowMagistralWaterCounterReadingRevision_ = 0;
     uint32_t unauthorizedFlowDetectedTimeMs_ = 0;
     bool unauthorizedFlowDetected_ = false;
     bool unauthorizedFlowErrorLogged_ = false;
 
+    uint32_t openValveWithoutFlowMagistralWaterCounterReadingRevision_ = 0;
     uint32_t openValveWithoutFlowDetectedTimeMs_ = 0;
     bool openValveWithoutFlowDetected_ = false;
     bool openValveWithoutFlowErrorLogged_ = false;
 
     void checkUnauthorizedWaterFlow();
     void checkOpenValvesWithoutWaterFlow();
+    bool hasNewMagistralWaterCounterReading(uint32_t &lastProcessedRevision) const;
     void closeAllValves();
     void closeExpiredValves();
 };

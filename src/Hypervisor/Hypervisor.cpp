@@ -21,12 +21,11 @@ void Hypervisor::loop()
 void Hypervisor::checkUnauthorizedWaterFlow()
 {
     const WaterCounter *magistralCounter = waterHub_.getMagistralWaterCounter();
-    if (magistralCounter->getReadingRevision() == magistralWaterCounterReadingRevision_)
+    if (!hasNewMagistralWaterCounterReading(
+            unauthorizedFlowMagistralWaterCounterReadingRevision_))
     {
         return;
     }
-
-    magistralWaterCounterReadingRevision_ = magistralCounter->getReadingRevision();
 
     float leafWaterUsageLiters = 0;
     for (const auto &counter : waterHub_.getLeafWaterCounters())
@@ -78,6 +77,12 @@ void Hypervisor::checkUnauthorizedWaterFlow()
 
 void Hypervisor::checkOpenValvesWithoutWaterFlow()
 {
+    if (!hasNewMagistralWaterCounterReading(
+            openValveWithoutFlowMagistralWaterCounterReadingRevision_))
+    {
+        return;
+    }
+
     bool hasOpenValve = false;
     for (const auto &valve : waterHub_.getValves())
     {
@@ -113,6 +118,19 @@ void Hypervisor::checkOpenValvesWithoutWaterFlow()
 
         openValveWithoutFlowErrorLogged_ = true;
     }
+}
+
+bool Hypervisor::hasNewMagistralWaterCounterReading(uint32_t &lastProcessedRevision) const
+{
+    const uint32_t currentRevision =
+        waterHub_.getMagistralWaterCounter()->getReadingRevision();
+    if (currentRevision == lastProcessedRevision)
+    {
+        return false;
+    }
+
+    lastProcessedRevision = currentRevision;
+    return true;
 }
 
 void Hypervisor::closeAllValves()
