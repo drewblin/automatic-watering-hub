@@ -20,9 +20,13 @@ public:
     void addSoilSensor(std::unique_ptr<SoilSensor> sensor);
     void addValve(std::unique_ptr<Valve> valve, SoilSensor *sensor);
 
-    void begin();
-    bool openValveForTime(uint8_t pin, uint32_t seconds);
     void loop();
+
+    const WaterCounter *getMagistralWaterCounter() const;
+    const PressureSensor *getPressureSensor() const;
+    const std::vector<std::unique_ptr<WaterCounter>> &getLeafWaterCounters() const;
+    const std::vector<std::unique_ptr<SoilSensor>> &getSoilSensors() const;
+    const std::vector<std::unique_ptr<Valve>> &getValves() const;
 
 private:
     std::unique_ptr<WaterCounter> magistralWaterCounter_;
@@ -33,7 +37,6 @@ private:
     std::vector<std::unique_ptr<Valve>> valves_;
 
     std::unordered_map<Valve *, SoilSensor *> valveToSoilSensorMap_;
-    std::unordered_map<Valve *, uint32_t> valveCloseTimesMs_;
 
     GlobalSettings globalSettings_;
     uint32_t lastWaterCounterReadTimeMs_ = 0;
@@ -43,5 +46,4 @@ private:
     void readWaterCounters();
     void readPressureSensor();
     void readSoilSensors();
-    void closeExpiredValves();
 };

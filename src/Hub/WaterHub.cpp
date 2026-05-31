@@ -1,4 +1,3 @@
-#include <cassert>
 #include "WaterHub.hpp"
 
 WaterHub::WaterHub(GlobalSettings globalSettings) : globalSettings_(globalSettings)
@@ -31,60 +30,36 @@ void WaterHub::addValve(std::unique_ptr<Valve> valve, SoilSensor *sensor)
     valveToSoilSensorMap_[valves_.back().get()] = sensor;
 }
 
-void WaterHub::begin()
-{
-    valveCloseTimesMs_.clear();
-
-    for (const auto &valve : valves_)
-    {
-        valve->close();
-    }
-}
-
-bool WaterHub::openValveForTime(uint8_t pin, uint32_t seconds)
-{
-    assert(seconds <= INT32_MAX / 1000);
-
-    for (const auto &valve : valves_)
-    {
-        if (valve->getPin() != pin)
-        {
-            continue;
-        }
-
-        valve->open();
-        valveCloseTimesMs_[valve.get()] = millis() + seconds * 1000;
-
-        return true;
-    }
-
-    return false;
-}
-
 void WaterHub::loop()
 {
-    closeExpiredValves();
-
     readPressureSensor();
     readSoilSensors();
     readWaterCounters();
 }
 
-void WaterHub::closeExpiredValves()
+const WaterCounter *WaterHub::getMagistralWaterCounter() const
 {
-    uint32_t currentTimeMs = millis();
+    return magistralWaterCounter_.get();
+}
 
-    for (auto it = valveCloseTimesMs_.begin(); it != valveCloseTimesMs_.end();)
-    {
-        if (static_cast<int32_t>(currentTimeMs - it->second) < 0)
-        {
-            ++it;
-            continue;
-        }
+const PressureSensor *WaterHub::getPressureSensor() const
+{
+    return pressureSensor_.get();
+}
 
-        it->first->close();
-        it = valveCloseTimesMs_.erase(it);
-    }
+const std::vector<std::unique_ptr<WaterCounter>> &WaterHub::getLeafWaterCounters() const
+{
+    return leafWaterCounters_;
+}
+
+const std::vector<std::unique_ptr<SoilSensor>> &WaterHub::getSoilSensors() const
+{
+    return soilSensors_;
+}
+
+const std::vector<std::unique_ptr<Valve>> &WaterHub::getValves() const
+{
+    return valves_;
 }
 
 void WaterHub::readWaterCounters()
@@ -100,15 +75,11 @@ void WaterHub::readWaterCounters()
 
     lastWaterCounterReadTimeMs_ = currentTimeMs;
 
-    Serial.print("Magistral water usage: ");
-    Serial.println(magistralWaterCounter_.get()->getLitersFromLastCall());
+    magistralWaterCounter_->readLiters();
 
-    for (size_t i = 0; i < leafWaterCounters_.size(); ++i)
+    for (const auto &counter : leafWaterCounters_)
     {
-        Serial.print("Leaf water counter ");
-        Serial.print(i);
-        Serial.print(" usage: ");
-        Serial.println(leafWaterCounters_[i]->getLitersFromLastCall());
+        counter->readLiters();
     }
 }
 
@@ -125,8 +96,7 @@ void WaterHub::readPressureSensor()
 
     lastPressureSensorReadTimeMs_ = currentTimeMs;
 
-    Serial.print("Pressure: ");
-    Serial.println(pressureSensor_.get()->readPressure());
+    pressureSensor_->readPressure();
 }
 
 void WaterHub::readSoilSensors()
@@ -144,14 +114,6 @@ void WaterHub::readSoilSensors()
 
     for (size_t i = 0; i < soilSensors_.size(); ++i)
     {
-        float humidity, temperature;
-        soilSensors_[i]->readData(humidity, temperature);
-        Serial.print("Soil sensor ");
-        Serial.print(i);
-        Serial.print(" - Humidity: ");
-        Serial.print(humidity);
-        Serial.print("%, Temperature: ");
-        Serial.print(temperature);
-        Serial.println("°C");
+        soilSensors_[i]->readData();
     }
 }

@@ -10,7 +10,7 @@ SoilSensor::SoilSensor(
 {
 }
 
-void SoilSensor::readData(float &humidity, float &temperature)
+void SoilSensor::readData()
 {
     modbusNode_.begin(slaveAddress_, serialPort_);
 
@@ -23,8 +23,9 @@ void SoilSensor::readData(float &humidity, float &temperature)
             slaveAddress_,
             result);
 
-        humidity = NAN;
-        temperature = NAN;
+        lastReadHumidity_ = NAN;
+        lastReadTemperature_ = NAN;
+        ++readingRevision_;
 
         return;
     }
@@ -32,6 +33,22 @@ void SoilSensor::readData(float &humidity, float &temperature)
     int16_t temperatureRaw = (int16_t)modbusNode_.getResponseBuffer(0);
     uint16_t humidityRaw = modbusNode_.getResponseBuffer(1);
 
-    temperature = temperatureRaw / 10.0f;
-    humidity = humidityRaw / 10.0f;
+    lastReadTemperature_ = temperatureRaw / 10.0f;
+    lastReadHumidity_ = humidityRaw / 10.0f;
+    ++readingRevision_;
+}
+
+float SoilSensor::getLastReadHumidity() const
+{
+    return lastReadHumidity_;
+}
+
+float SoilSensor::getLastReadTemperature() const
+{
+    return lastReadTemperature_;
+}
+
+uint32_t SoilSensor::getReadingRevision() const
+{
+    return readingRevision_;
 }

@@ -43,7 +43,7 @@ WaterCounter::WaterCounter(uint8_t pin, float litersPerTick)
     ESP_ERROR_CHECK(pcnt_unit_start(pcntUnit_));
 }
 
-float WaterCounter::getLitersFromLastCall()
+void WaterCounter::readLiters()
 {
     int tickCount = 0;
     pcnt_unit_get_count(pcntUnit_, &tickCount);
@@ -57,6 +57,16 @@ float WaterCounter::getLitersFromLastCall()
     }
 
     lastTickCount_ = tickCount;
+    lastReadLiters_ = delta * litersPerTick_;
+    ++readingRevision_;
+}
 
-    return delta * litersPerTick_;
+float WaterCounter::getLastReadLiters() const
+{
+    return lastReadLiters_;
+}
+
+uint32_t WaterCounter::getReadingRevision() const
+{
+    return readingRevision_;
 }

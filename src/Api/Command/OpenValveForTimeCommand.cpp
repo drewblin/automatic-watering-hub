@@ -7,5 +7,16 @@ OpenValveForTimeCommand::OpenValveForTimeCommand(WaterHub &waterHub)
 
 bool OpenValveForTimeCommand::execute(uint8_t pin, uint32_t seconds)
 {
-    return waterHub_.openValveForTime(pin, seconds);
+    for (const auto &valve : waterHub_.getValves())
+    {
+        if (valve->getPin() != pin)
+        {
+            continue;
+        }
+
+        valve->openForTime(seconds);
+        return true;
+    }
+
+    return false;
 }

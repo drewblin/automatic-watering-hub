@@ -10,7 +10,7 @@ PressureSensor::PressureSensor(
 {
 }
 
-float PressureSensor::readPressure()
+void PressureSensor::readPressure()
 {
     modbusNode_.begin(slaveAddress_, serialPort_);
 
@@ -23,14 +23,27 @@ float PressureSensor::readPressure()
             slaveAddress_,
             result);
 
-        return NAN;
+        lastReadPressure_ = NAN;
+        ++readingRevision_;
+        return;
     }
 
     uint16_t unit = modbusNode_.getResponseBuffer(0);
     uint16_t decimal = modbusNode_.getResponseBuffer(1);
     int16_t pressureRaw = (int16_t)modbusNode_.getResponseBuffer(2);
 
-    return convertToBar(pressureRaw / powf(10, decimal), unit);
+    lastReadPressure_ = convertToBar(pressureRaw / powf(10, decimal), unit);
+    ++readingRevision_;
+}
+
+float PressureSensor::getLastReadPressure() const
+{
+    return lastReadPressure_;
+}
+
+uint32_t PressureSensor::getReadingRevision() const
+{
+    return readingRevision_;
 }
 
 float PressureSensor::convertToBar(float value, uint16_t unit)
