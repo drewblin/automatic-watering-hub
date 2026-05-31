@@ -5,14 +5,17 @@
 
 ApiServer::ApiServer(
     ChangeDeviceAddressCommand changeDeviceAddressCommand,
-    OpenValveForTimeCommand openValveForTimeCommand,
     Settings &settings,
     uint16_t port)
     : changeDeviceAddressCommand_(changeDeviceAddressCommand),
-      openValveForTimeCommand_(openValveForTimeCommand),
       settings_(settings),
       server_(port)
 {
+}
+
+void ApiServer::enableWaterHubRoutes(WaterHub &waterHub)
+{
+    openValveForTimeCommand_ = std::make_unique<OpenValveForTimeCommand>(waterHub);
 }
 
 void ApiServer::begin()
@@ -30,11 +33,20 @@ void ApiServer::registerRoutes()
 {
     server_.on("/api/modbus/device-address", HTTP_POST, [this]()
                { handleChangeDeviceAddress(); });
-    server_.on("/api/valves/open-for-time", HTTP_POST, [this]()
-               { handleOpenValveForTime(); });
+
+    if (openValveForTimeCommand_ != nullptr)
+    {
+        registerWaterHubRoutes();
+    }
 
     server_.onNotFound([this]()
                        { sendError(404, "Not found"); });
+}
+
+void ApiServer::registerWaterHubRoutes()
+{
+    server_.on("/api/valves/open-for-time", HTTP_POST, [this]()
+               { handleOpenValveForTime(); });
 }
 
 void ApiServer::handleChangeDeviceAddress()
@@ -126,6 +138,12 @@ curl -X POST http://192.168.0.104/api/valves/open-for-time \
 }'
     */
 
+    if (openValveForTimeCommand_ == nullptr)
+    {
+        sendError(503, "Water hub is not available");
+        return;
+    }
+
     JsonDocument request;
     if (!readJsonRequest(request))
     {
@@ -151,7 +169,7 @@ curl -X POST http://192.168.0.104/api/valves/open-for-time \
         return;
     }
 
-    if (!openValveForTimeCommand_.execute(pin, seconds))
+    if (!openValveForTimeCommand_->execute(pin, seconds))
     {
         sendError(404, "Valve not found");
         return;

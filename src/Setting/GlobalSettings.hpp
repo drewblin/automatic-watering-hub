@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "WateringStartMode.hpp"
 
 struct GlobalSettings
 {
@@ -11,4 +12,9 @@ struct GlobalSettings
     uint32_t idleSoilSensorReadIntervalSeconds;
     uint32_t wateringSoilSensorReadIntervalSeconds;
     uint32_t maximumManualValveOpenTimeSeconds;
+    uint8_t startWateringBelowHumidityPercent;
+    uint8_t stopWateringAboveHumidityPercent;
+    WateringStartMode wateringStartMode;
+    uint32_t zoneWateringDurationSeconds;
+    uint32_t zoneWateringRetryDelaySeconds;
 };

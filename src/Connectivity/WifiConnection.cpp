@@ -1,16 +1,17 @@
 #include "WifiConnection.hpp"
 #include "WiFi.h"
 
-// todo use bluetooth for wifi config
-#define WIFI_SSID "Lypky"
-#define WIFI_PASSWORD "79348454"
+WifiConnection::WifiConnection(WifiSettings settings)
+    : settings_(settings)
+{
+}
 
 void WifiConnection::begin()
 {
     Serial.print("Starting WiFi: ");
 
     WiFi.mode(WIFI_STA);
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    WiFi.begin(settings_.ssid.c_str(), settings_.password.c_str());
 
     uint32_t start = millis();
     while (WiFi.status() != WL_CONNECTED && millis() - start < 15000)
