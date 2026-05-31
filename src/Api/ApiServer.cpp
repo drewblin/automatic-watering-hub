@@ -1,52 +1,49 @@
 #include "ApiServer.hpp"
 
-#include "ArduinoJson.h"
-#include "JsonRequestReader.hpp"
+#include <Arduino.h>
 
 ApiServer::ApiServer(
     ChangeDeviceAddressCommand changeDeviceAddressCommand,
-    Settings &settings,
+    GetSettingsCommand getSettingsCommand,
+    SaveSettingsCommand saveSettingsCommand,
     uint16_t port)
     : changeDeviceAddressCommand_(changeDeviceAddressCommand),
-      settings_(settings),
+      getSettingsCommand_(getSettingsCommand),
+      saveSettingsCommand_(saveSettingsCommand),
       server_(port)
 {
+    server_.on("/api/modbus/device-address", HTTP_POST, [this]()
+               { handleChangeDeviceAddress(); });
+    server_.on("/api/settings", HTTP_GET, [this]()
+               { handleGetSettings(); });
+    server_.on("/api/settings", HTTP_PUT, [this]()
+               { handleSaveSettings(); });
+
+    server_.onNotFound([this]()
+                       {
+                           ApiCommandResult result(404, false);
+                           result.error = "Not found";
+                           sendCommandResult(result);
+                       });
 }
 
-void ApiServer::enableWaterHubRoutes(WaterHub &waterHub)
+void ApiServer::registerWaterHubRoutes(
+    std::unique_ptr<OpenValveForTimeCommand> openValveForTimeCommand)
 {
-    openValveForTimeCommand_ = std::make_unique<OpenValveForTimeCommand>(waterHub);
+    openValveForTimeCommand_ = std::move(openValveForTimeCommand);
+
+    server_.on("/api/valves/open-for-time", HTTP_POST, [this]()
+               { handleOpenValveForTime(); });
 }
 
 void ApiServer::begin()
 {
-    registerRoutes();
     server_.begin();
 }
 
 void ApiServer::handleClient()
 {
     server_.handleClient();
-}
-
-void ApiServer::registerRoutes()
-{
-    server_.on("/api/modbus/device-address", HTTP_POST, [this]()
-               { handleChangeDeviceAddress(); });
-
-    if (openValveForTimeCommand_ != nullptr)
-    {
-        registerWaterHubRoutes();
-    }
-
-    server_.onNotFound([this]()
-                       { sendError(404, "Not found"); });
-}
-
-void ApiServer::registerWaterHubRoutes()
-{
-    server_.on("/api/valves/open-for-time", HTTP_POST, [this]()
-               { handleOpenValveForTime(); });
 }
 
 void ApiServer::handleChangeDeviceAddress()
@@ -63,68 +60,7 @@ curl -X POST http://192.168.0.104/api/modbus/device-address \
 }'
     */
 
-    JsonDocument request;
-    if (!readJsonRequest(request))
-    {
-        return;
-    }
-
-    String error;
-    uint8_t currentAddress = 0;
-    uint8_t newAddress = 0;
-    uint16_t registerAddress = 0;
-    uint16_t saveRegisterAddress = 0;
-    uint16_t saveValue = 0;
-    bool save = false;
-    bool hasSaveRegisterAddress = false;
-    bool hasSaveValue = false;
-    JsonVariantConst json = request.as<JsonVariantConst>();
-
-    if (!JsonRequestReader::readRequiredUint8(json, "currentAddress", currentAddress, error) ||
-        !JsonRequestReader::readRequiredUint8(json, "newAddress", newAddress, error) ||
-        !JsonRequestReader::readRequiredUint16(json, "registerAddress", registerAddress, error) ||
-        !JsonRequestReader::readOptionalUint16(json, "saveRegisterAddress", saveRegisterAddress, hasSaveRegisterAddress, error) ||
-        !JsonRequestReader::readOptionalUint16(json, "saveValue", saveValue, hasSaveValue, error))
-    {
-        sendError(400, error);
-        return;
-    }
-
-    if (hasSaveRegisterAddress != hasSaveValue)
-    {
-        sendError(400, "saveRegisterAddress and saveValue must be provided together");
-        return;
-    }
-
-    save = hasSaveRegisterAddress && hasSaveValue;
-
-    uint8_t status = changeDeviceAddressCommand_.execute(
-        currentAddress,
-        newAddress,
-        registerAddress,
-        save,
-        saveRegisterAddress,
-        saveValue);
-
-    JsonDocument response;
-    response["status"] = status;
-    response["currentAddress"] = currentAddress;
-    response["newAddress"] = newAddress;
-    response["registerAddress"] = registerAddress;
-    response["save"] = save;
-    if (save)
-    {
-        response["saveRegisterAddress"] = saveRegisterAddress;
-        response["saveValue"] = saveValue;
-    }
-
-    if (status != ChangeDeviceAddressCommand::SuccessStatus)
-    {
-        sendResponse(502, false, &response, "Failed to change device address");
-        return;
-    }
-
-    sendSuccess(200, response);
+    sendCommandResult(execute(changeDeviceAddressCommand_));
 }
 
 void ApiServer::handleOpenValveForTime()
@@ -140,82 +76,42 @@ curl -X POST http://192.168.0.104/api/valves/open-for-time \
 
     if (openValveForTimeCommand_ == nullptr)
     {
-        sendError(503, "Water hub is not available");
+        ApiCommandResult result(503, false);
+        result.error = "Water hub is not available";
+        sendCommandResult(result);
         return;
     }
 
-    JsonDocument request;
-    if (!readJsonRequest(request))
-    {
-        return;
-    }
-
-    String error;
-    uint8_t pin = 0;
-    uint32_t seconds = 0;
-    JsonVariantConst json = request.as<JsonVariantConst>();
-
-    if (!JsonRequestReader::readRequiredUint8(json, "pin", pin, error) ||
-        !JsonRequestReader::readRequiredUint32(json, "seconds", seconds, error))
-    {
-        sendError(400, error);
-        return;
-    }
-
-    if (seconds > settings_.getGlobalSettings().maximumManualValveOpenTimeSeconds ||
-        seconds > INT32_MAX / 1000)
-    {
-        sendError(400, "Valve open time exceeds configured limit");
-        return;
-    }
-
-    if (!openValveForTimeCommand_->execute(pin, seconds))
-    {
-        sendError(404, "Valve not found");
-        return;
-    }
-
-    JsonDocument response;
-    response["pin"] = pin;
-    response["seconds"] = seconds;
-
-    sendSuccess(200, response);
+    sendCommandResult(execute(*openValveForTimeCommand_));
 }
 
-bool ApiServer::readJsonRequest(JsonDocument &request)
+void ApiServer::handleGetSettings()
 {
-    if (!server_.hasArg("plain"))
-    {
-        sendError(400, "Missing JSON body");
-        return false;
-    }
-
-    DeserializationError parseError = deserializeJson(request, server_.arg("plain"));
-    if (parseError)
-    {
-        sendError(400, String("Invalid JSON: ") + parseError.c_str());
-        return false;
-    }
-
-    return true;
+    sendCommandResult(getSettingsCommand_.execute());
 }
 
-void ApiServer::sendResponse(uint16_t statusCode, bool success, const JsonDocument *responseData, const String &error)
+void ApiServer::handleSaveSettings()
 {
-    JsonDocument response;
-    response["success"] = success;
-    if (responseData != nullptr)
+    ApiCommandResult result = execute(saveSettingsCommand_);
+    sendCommandResult(result);
+    if (!result.success)
     {
-        response["data"] = responseData->as<JsonVariantConst>();
-    }
-    else
-    {
-        response["data"] = nullptr;
+        return;
     }
 
-    if (error.length() > 0)
+    delay(100);
+    ESP.restart();
+}
+
+void ApiServer::sendCommandResult(const ApiCommandResult &result)
+{
+    JsonDocument response;
+    response["success"] = result.success;
+    response["data"] = result.data.as<JsonVariantConst>();
+
+    if (result.error.length() > 0)
     {
-        response["error"] = error;
+        response["error"] = result.error;
     }
     else
     {
@@ -224,15 +120,5 @@ void ApiServer::sendResponse(uint16_t statusCode, bool success, const JsonDocume
 
     String payload;
     serializeJson(response, payload);
-    server_.send(statusCode, "application/json", payload);
-}
-
-void ApiServer::sendSuccess(uint16_t statusCode, const JsonDocument &responseData)
-{
-    sendResponse(statusCode, true, &responseData, "");
-}
-
-void ApiServer::sendError(uint16_t statusCode, const String &message)
-{
-    sendResponse(statusCode, false, nullptr, message);
+    server_.send(result.statusCode, "application/json", payload);
 }

@@ -5,17 +5,17 @@ WaterCounterSetting::WaterCounterSetting(uint8_t pin, std::string name, float li
 {
 }
 
-uint8_t WaterCounterSetting::getPin()
+uint8_t WaterCounterSetting::getPin() const
 {
     return pin_;
 }
 
-float WaterCounterSetting::getLitersPerTick()
+float WaterCounterSetting::getLitersPerTick() const
 {
     return litersPerTick_;
 }
 
-std::string WaterCounterSetting::getName()
+std::string WaterCounterSetting::getName() const
 {
     return name_;
 }

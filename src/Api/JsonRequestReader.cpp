@@ -1,5 +1,61 @@
 #include "JsonRequestReader.hpp"
 
+#include <cmath>
+
+bool JsonRequestReader::readRequiredObject(JsonVariantConst json, const char *field, JsonObjectConst &value, String &error)
+{
+    if (json[field].isNull())
+    {
+        error = String("Missing field: ") + field;
+        return false;
+    }
+
+    if (!json[field].is<JsonObjectConst>())
+    {
+        error = String("Invalid object field: ") + field;
+        return false;
+    }
+
+    value = json[field].as<JsonObjectConst>();
+    return true;
+}
+
+bool JsonRequestReader::readRequiredArray(JsonVariantConst json, const char *field, JsonArrayConst &value, String &error)
+{
+    if (json[field].isNull())
+    {
+        error = String("Missing field: ") + field;
+        return false;
+    }
+
+    if (!json[field].is<JsonArrayConst>())
+    {
+        error = String("Invalid array field: ") + field;
+        return false;
+    }
+
+    value = json[field].as<JsonArrayConst>();
+    return true;
+}
+
+bool JsonRequestReader::readRequiredString(JsonVariantConst json, const char *field, std::string &value, String &error)
+{
+    if (json[field].isNull())
+    {
+        error = String("Missing field: ") + field;
+        return false;
+    }
+
+    if (!json[field].is<const char *>())
+    {
+        error = String("Invalid string field: ") + field;
+        return false;
+    }
+
+    value = json[field].as<const char *>();
+    return true;
+}
+
 bool JsonRequestReader::readRequiredUint8(JsonVariantConst json, const char *field, uint8_t &value, String &error)
 {
     if (json[field].isNull())
@@ -45,6 +101,23 @@ bool JsonRequestReader::readRequiredUint32(JsonVariantConst json, const char *fi
     if (!parseUint32(json[field], value))
     {
         error = String("Invalid uint32 field: ") + field;
+        return false;
+    }
+
+    return true;
+}
+
+bool JsonRequestReader::readRequiredPositiveFloat(JsonVariantConst json, const char *field, float &value, String &error)
+{
+    if (json[field].isNull())
+    {
+        error = String("Missing field: ") + field;
+        return false;
+    }
+
+    if (!parsePositiveFloat(json[field], value))
+    {
+        error = String("Invalid positive float field: ") + field;
         return false;
     }
 
@@ -107,4 +180,21 @@ bool JsonRequestReader::parseUint32(JsonVariantConst source, uint32_t &value)
     }
 
     return false;
+}
+
+bool JsonRequestReader::parsePositiveFloat(JsonVariantConst source, float &value)
+{
+    if (!source.is<float>())
+    {
+        return false;
+    }
+
+    float parsed = source.as<float>();
+    if (!std::isfinite(parsed) || parsed <= 0)
+    {
+        return false;
+    }
+
+    value = parsed;
+    return true;
 }

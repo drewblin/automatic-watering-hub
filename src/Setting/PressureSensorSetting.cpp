@@ -5,7 +5,7 @@ PressureSensorSetting::PressureSensorSetting(uint8_t slaveAddress)
 {
 }
 
-uint8_t PressureSensorSetting::getSlaveAddress()
+uint8_t PressureSensorSetting::getSlaveAddress() const
 {
     return slaveAddress_;
 }

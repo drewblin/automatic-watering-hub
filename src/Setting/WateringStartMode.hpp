@@ -7,6 +7,9 @@
 class WateringStartMode
 {
 public:
+    static constexpr const char *IMMEDIATELY = "immediately";
+    static constexpr const char *AT_SCHEDULED_TIME = "atScheduledTime";
+
     enum class Value
     {
         Immediately,
@@ -30,12 +33,12 @@ public:
 
     static std::optional<WateringStartMode> tryFrom(const char *value, TimeOfDay scheduledStartTime)
     {
-        if (value != nullptr && strcmp(value, "immediately") == 0)
+        if (value != nullptr && strcmp(value, IMMEDIATELY) == 0)
         {
             return immediately();
         }
 
-        if (value != nullptr && strcmp(value, "atScheduledTime") == 0)
+        if (value != nullptr && strcmp(value, AT_SCHEDULED_TIME) == 0)
         {
             return atScheduledTime(scheduledStartTime);
         }
@@ -51,6 +54,11 @@ public:
     constexpr std::optional<TimeOfDay> getScheduledStartTime() const
     {
         return scheduledStartTime_;
+    }
+
+    constexpr const char *toString() const
+    {
+        return value_ == Value::Immediately ? IMMEDIATELY : AT_SCHEDULED_TIME;
     }
 
 private:

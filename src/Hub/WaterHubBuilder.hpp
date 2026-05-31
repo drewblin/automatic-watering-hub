@@ -1,5 +1,5 @@
 #include "WaterHub.hpp"
-#include "Setting/Settings.hpp"
+#include "Setting/SettingsSnapshot.hpp"
 
 class WaterHubBuilder
 {
@@ -7,7 +7,7 @@ public:
     WaterHubBuilder(
         ModbusMaster &modbusNode,
         HardwareSerial &modbusSerialPort);
-    WaterHub build(Settings settings);
+    WaterHub build(const SettingsSnapshot &settings);
 
 private:
     ModbusMaster &modbusNode_;

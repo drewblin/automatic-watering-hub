@@ -7,9 +7,9 @@ class ValveSetting
 {
 public:
     ValveSetting(uint8_t pin, std::string name, uint8_t soilSensorSlaveAddress);
-    uint8_t getPin();
-    std::string getName();
-    uint8_t getSoilSensorSlaveAddress();
+    uint8_t getPin() const;
+    std::string getName() const;
+    uint8_t getSoilSensorSlaveAddress() const;
 
 private:
     uint8_t pin_;

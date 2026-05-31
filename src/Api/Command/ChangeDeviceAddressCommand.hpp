@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ApiCommandResult.hpp"
 #include "ModbusMaster.h"
 
 class ChangeDeviceAddressCommand
@@ -8,6 +9,7 @@ public:
     static const uint8_t SuccessStatus = ModbusMaster::ku8MBSuccess;
 
     ChangeDeviceAddressCommand(ModbusMaster &modbusNode, HardwareSerial &serialPort);
+    ApiCommandResult execute(const JsonDocument &request);
 
     uint8_t execute(
         uint8_t currentAddress,

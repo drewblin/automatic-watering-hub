@@ -5,17 +5,17 @@ ValveSetting::ValveSetting(uint8_t pin, std::string name, uint8_t soilSensorSlav
 {
 }
 
-uint8_t ValveSetting::getPin()
+uint8_t ValveSetting::getPin() const
 {
     return pin_;
 }
 
-std::string ValveSetting::getName()
+std::string ValveSetting::getName() const
 {
     return name_;
 }
 
-uint8_t ValveSetting::getSoilSensorSlaveAddress()
+uint8_t ValveSetting::getSoilSensorSlaveAddress() const
 {
     return soilSensorSlaveAddress_;
 }

@@ -5,6 +5,7 @@
 #include "Connectivity/WifiConnection.hpp"
 #include "Hub/WaterHubBuilder.hpp"
 #include "Hypervisor/Hypervisor.hpp"
+#include "Setting/Settings.hpp"
 
 Clock systemClock;
 ModbusMaster modbusNode;
@@ -24,25 +25,36 @@ void setup()
     Serial2.begin(9600, SERIAL_8N1, 16, 17);
 
     settings.begin();
-    wifiConnection = std::make_unique<WifiConnection>(settings.getWifiSettings());
+    SettingsSnapshot settingsSnapshot = settings.get();
+
+    wifiConnection = std::make_unique<WifiConnection>(settingsSnapshot.wifiSettings);
     wifiConnection->begin();
+
     systemClock.begin();
-    ApiServerBuilder apiServerBuilder(modbusNode, Serial2, settings);
+
+    ApiServerBuilder apiServerBuilder(
+        modbusNode,
+        Serial2,
+        settingsSnapshot,
+        settings,
+        systemClock);
     apiServer = apiServerBuilder.build();
 
-    if (!settings.hasRequiredWaterHubSettings())
+    if (settingsSnapshot.hasRequiredWaterHubSettings())
+    {
+        waterHub = std::make_unique<WaterHub>(waterHubBuilder.build(settingsSnapshot));
+        hypervisor = std::make_unique<Hypervisor>(*waterHub);
+        automaticWatering = std::make_unique<AutomaticWatering>(*waterHub);
+
+        apiServerBuilder.enableWaterHubRoutes(*apiServer, *waterHub);
+
+        hypervisor->begin();
+    }
+    else
     {
         ESP_LOGE("Main", "Water hub is disabled because required settings are missing");
-        apiServer->begin();
-        return;
     }
 
-    waterHub = std::make_unique<WaterHub>(waterHubBuilder.build(settings));
-    hypervisor = std::make_unique<Hypervisor>(*waterHub);
-    automaticWatering = std::make_unique<AutomaticWatering>(*waterHub);
-    apiServer->enableWaterHubRoutes(*waterHub);
-
-    hypervisor->begin();
     apiServer->begin();
 }
 
@@ -50,6 +62,7 @@ void loop()
 {
     systemClock.loop();
     apiServer->handleClient();
+
     if (waterHub == nullptr)
     {
         return;

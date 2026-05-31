@@ -5,12 +5,12 @@ SoilSensorSetting::SoilSensorSetting(uint8_t slaveAddress, std::string name)
 {
 }
 
-uint8_t SoilSensorSetting::getSlaveAddress()
+uint8_t SoilSensorSetting::getSlaveAddress() const
 {
     return slaveAddress_;
 }
 
-std::string SoilSensorSetting::getName()
+std::string SoilSensorSetting::getName() const
 {
     return name_;
 }

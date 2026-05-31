@@ -9,19 +9,19 @@ WaterHubBuilder::WaterHubBuilder(
 {
 }
 
-WaterHub WaterHubBuilder::build(Settings settings)
+WaterHub WaterHubBuilder::build(const SettingsSnapshot &settings)
 {
-    GlobalSettings globalSettings = settings.getGlobalSettings();
+    GlobalSettings globalSettings = settings.globalSettings;
     WaterHub waterHub;
 
-    auto magistralWaterCounterSetting = settings.getMagistralWaterCounterSetting();
+    auto magistralWaterCounterSetting = settings.magistralWaterCounterSetting.value();
     auto magistralWaterCounter = std::make_unique<WaterCounter>(
         magistralWaterCounterSetting.getPin(),
         magistralWaterCounterSetting.getLitersPerTick(),
         globalSettings.idleWaterCounterReadIntervalSeconds);
     waterHub.setMagistralWaterCounter(std::move(magistralWaterCounter));
 
-    for (WaterCounterSetting setting : settings.getLeafWaterCounterSetting())
+    for (WaterCounterSetting setting : settings.leafWaterCounterSettings)
     {
         auto leafWaterCounter = std::make_unique<WaterCounter>(
             setting.getPin(),
@@ -33,12 +33,12 @@ WaterHub WaterHubBuilder::build(Settings settings)
     auto pressureSensor = std::make_unique<PressureSensor>(
         modbusNode_,
         modbusSerialPort_,
-        settings.getPressureSensorSetting().getSlaveAddress(),
+        settings.pressureSensorSetting->getSlaveAddress(),
         globalSettings.idlePressureSensorReadIntervalSeconds);
     waterHub.setPressureSensor(std::move(pressureSensor));
 
     std::unordered_map<std::uint8_t, SoilSensor *> soilSensorMap;
-    for (SoilSensorSetting setting : settings.getSoilSensorSetting())
+    for (SoilSensorSetting setting : settings.soilSensorSettings)
     {
         auto soilSensor = std::make_unique<SoilSensor>(
             modbusNode_,
@@ -52,7 +52,7 @@ WaterHub WaterHubBuilder::build(Settings settings)
         soilSensorMap[setting.getSlaveAddress()] = soilSensorPtr;
     }
 
-    for (ValveSetting setting : settings.getValveSetting())
+    for (ValveSetting setting : settings.valveSettings)
     {
         auto soilSensorIt = soilSensorMap.find(setting.getSoilSensorSlaveAddress());
         if (soilSensorIt == soilSensorMap.end())

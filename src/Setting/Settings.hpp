@@ -9,20 +9,15 @@
 #include "SoilSensorSetting.hpp"
 #include "GlobalSettings.hpp"
 #include "WifiSettings.hpp"
+#include "SettingsSnapshot.hpp"
 
 class Settings
 {
 public:
     Settings();
     void begin();
-    bool hasRequiredWaterHubSettings() const;
-    GlobalSettings getGlobalSettings();
-    WifiSettings getWifiSettings();
-    std::vector<ValveSetting> getValveSetting();
-    PressureSensorSetting getPressureSensorSetting();
-    WaterCounterSetting getMagistralWaterCounterSetting();
-    std::vector<WaterCounterSetting> getLeafWaterCounterSetting();
-    std::vector<SoilSensorSetting> getSoilSensorSetting();
+    SettingsSnapshot get() const;
+    bool save(const SettingsSnapshot &snapshot, String &error);
 
 private:
     static uint32_t readUInt(
@@ -54,11 +49,5 @@ private:
         bool storageAvailable,
         const char *key);
 
-    GlobalSettings globalSettings_;
-    WifiSettings wifiSettings_;
-    std::vector<ValveSetting> valveSettings_;
-    std::optional<PressureSensorSetting> pressureSensorSetting_;
-    std::optional<WaterCounterSetting> magistralWaterCounterSetting_;
-    std::vector<WaterCounterSetting> leafWaterCounterSettings_;
-    std::vector<SoilSensorSetting> soilSensorSettings_;
+    SettingsSnapshot snapshot_;
 };
