@@ -1,8 +1,9 @@
 #include "WaterCounter.hpp"
 
-WaterCounter::WaterCounter(uint8_t pin, float litersPerTick)
+WaterCounter::WaterCounter(uint8_t pin, float litersPerTick, uint32_t readIntervalSeconds)
 {
     litersPerTick_ = litersPerTick;
+    readIntervalSeconds_ = readIntervalSeconds;
 
     pinMode(pin, INPUT);
 
@@ -43,6 +44,17 @@ WaterCounter::WaterCounter(uint8_t pin, float litersPerTick)
     ESP_ERROR_CHECK(pcnt_unit_start(pcntUnit_));
 }
 
+void WaterCounter::readLitersIfDue(uint32_t currentTimeMs)
+{
+    if (currentTimeMs - lastReadTimeMs_ < readIntervalSeconds_ * 1000)
+    {
+        return;
+    }
+
+    lastReadTimeMs_ = currentTimeMs;
+    readLiters();
+}
+
 void WaterCounter::readLiters()
 {
     int tickCount = 0;
@@ -59,6 +71,16 @@ void WaterCounter::readLiters()
     lastTickCount_ = tickCount;
     lastReadLiters_ = delta * litersPerTick_;
     ++readingRevision_;
+}
+
+void WaterCounter::setReadIntervalSeconds(uint32_t readIntervalSeconds)
+{
+    readIntervalSeconds_ = readIntervalSeconds;
+}
+
+uint32_t WaterCounter::getReadIntervalSeconds() const
+{
+    return readIntervalSeconds_;
 }
 
 float WaterCounter::getLastReadLiters() const

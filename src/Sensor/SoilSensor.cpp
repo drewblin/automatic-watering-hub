@@ -4,10 +4,23 @@
 SoilSensor::SoilSensor(
     ModbusMaster &modbusNode,
     HardwareSerial &serialPort,
-    uint8_t slaveAddress) : modbusNode_(modbusNode),
-                            serialPort_(serialPort),
-                            slaveAddress_(slaveAddress)
+    uint8_t slaveAddress,
+    uint32_t readIntervalSeconds) : modbusNode_(modbusNode),
+                                    serialPort_(serialPort),
+                                    slaveAddress_(slaveAddress),
+                                    readIntervalSeconds_(readIntervalSeconds)
 {
+}
+
+void SoilSensor::readDataIfDue(uint32_t currentTimeMs)
+{
+    if (currentTimeMs - lastReadTimeMs_ < readIntervalSeconds_ * 1000)
+    {
+        return;
+    }
+
+    lastReadTimeMs_ = currentTimeMs;
+    readData();
 }
 
 void SoilSensor::readData()
@@ -36,6 +49,16 @@ void SoilSensor::readData()
     lastReadTemperature_ = temperatureRaw / 10.0f;
     lastReadHumidity_ = humidityRaw / 10.0f;
     ++readingRevision_;
+}
+
+void SoilSensor::setReadIntervalSeconds(uint32_t readIntervalSeconds)
+{
+    readIntervalSeconds_ = readIntervalSeconds;
+}
+
+uint32_t SoilSensor::getReadIntervalSeconds() const
+{
+    return readIntervalSeconds_;
 }
 
 float SoilSensor::getLastReadHumidity() const

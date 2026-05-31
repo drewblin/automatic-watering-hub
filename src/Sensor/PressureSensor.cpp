@@ -4,10 +4,23 @@
 PressureSensor::PressureSensor(
     ModbusMaster &modbusNode,
     HardwareSerial &serialPort,
-    uint8_t slaveAddress) : modbusNode_(modbusNode),
-                            serialPort_(serialPort),
-                            slaveAddress_(slaveAddress)
+    uint8_t slaveAddress,
+    uint32_t readIntervalSeconds) : modbusNode_(modbusNode),
+                                    serialPort_(serialPort),
+                                    slaveAddress_(slaveAddress),
+                                    readIntervalSeconds_(readIntervalSeconds)
 {
+}
+
+void PressureSensor::readPressureIfDue(uint32_t currentTimeMs)
+{
+    if (currentTimeMs - lastReadTimeMs_ < readIntervalSeconds_ * 1000)
+    {
+        return;
+    }
+
+    lastReadTimeMs_ = currentTimeMs;
+    readPressure();
 }
 
 void PressureSensor::readPressure()
@@ -34,6 +47,16 @@ void PressureSensor::readPressure()
 
     lastReadPressure_ = convertToBar(pressureRaw / powf(10, decimal), unit);
     ++readingRevision_;
+}
+
+void PressureSensor::setReadIntervalSeconds(uint32_t readIntervalSeconds)
+{
+    readIntervalSeconds_ = readIntervalSeconds;
+}
+
+uint32_t PressureSensor::getReadIntervalSeconds() const
+{
+    return readIntervalSeconds_;
 }
 
 float PressureSensor::getLastReadPressure() const
