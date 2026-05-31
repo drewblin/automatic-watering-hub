@@ -121,8 +121,8 @@ void ApiServer::handleOpenValveForTime()
 curl -X POST http://192.168.0.104/api/valves/open-for-time \
 -H "Content-Type: application/json" \
 -d '{
-    "pin": 12,
-    "seconds": 60
+    "pin": 22,
+    "seconds": 10
 }'
     */
 

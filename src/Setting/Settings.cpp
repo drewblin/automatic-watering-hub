@@ -12,12 +12,12 @@ Settings::Settings()
   },
   "valveSettings": [
     {
-      "pin": 12,
+      "pin": 22,
       "name": "Front lawn",
       "soilSensorSlaveAddress": 2
     },
     {
-      "pin": 13,
+      "pin": 23,
       "name": "Backyard",
       "soilSensorSlaveAddress": 3
     }
