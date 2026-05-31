@@ -15,6 +15,7 @@ void Hypervisor::loop()
 {
     closeExpiredValves();
     checkUnauthorizedWaterFlow();
+    checkOpenValvesWithoutWaterFlow();
 }
 
 void Hypervisor::checkUnauthorizedWaterFlow()
@@ -72,6 +73,45 @@ void Hypervisor::checkUnauthorizedWaterFlow()
             unaccountedWaterUsageLiters);
 
         unauthorizedFlowErrorLogged_ = true;
+    }
+}
+
+void Hypervisor::checkOpenValvesWithoutWaterFlow()
+{
+    bool hasOpenValve = false;
+    for (const auto &valve : waterHub_.getValves())
+    {
+        if (valve->isOpen())
+        {
+            hasOpenValve = true;
+            break;
+        }
+    }
+
+    const bool hasMagistralWaterFlow =
+        waterHub_.getMagistralWaterCounter()->getLastReadLiters() > WATER_COUNTER_TOLERANCE_LITERS;
+    if (!hasOpenValve || hasMagistralWaterFlow)
+    {
+        openValveWithoutFlowDetected_ = false;
+        openValveWithoutFlowErrorLogged_ = false;
+        return;
+    }
+
+    if (!openValveWithoutFlowDetected_)
+    {
+        openValveWithoutFlowDetectedTimeMs_ = millis();
+        openValveWithoutFlowDetected_ = true;
+        return;
+    }
+
+    if (!openValveWithoutFlowErrorLogged_ &&
+        millis() - openValveWithoutFlowDetectedTimeMs_ >= OPEN_VALVE_WITHOUT_FLOW_ERROR_DELAY_MS)
+    {
+        ESP_LOGE(
+            "Hypervisor",
+            "At least one valve has been open for more than 10 seconds, but the magistral water counter shows no flow");
+
+        openValveWithoutFlowErrorLogged_ = true;
     }
 }
 
