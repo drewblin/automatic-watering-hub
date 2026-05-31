@@ -10,6 +10,7 @@ Valve::Valve(uint8_t pin) : pin_(pin)
 void Valve::open()
 {
     digitalWrite(pin_, HIGH);
+    isOpen_ = true;
     hasCloseTime_ = false;
 }
 
@@ -18,6 +19,7 @@ void Valve::openForTime(uint32_t seconds)
     assert(seconds <= INT32_MAX / 1000);
 
     digitalWrite(pin_, HIGH);
+    isOpen_ = true;
     closeTimeMs_ = millis() + seconds * 1000;
     hasCloseTime_ = true;
 }
@@ -25,7 +27,13 @@ void Valve::openForTime(uint32_t seconds)
 void Valve::close()
 {
     digitalWrite(pin_, LOW);
+    isOpen_ = false;
     hasCloseTime_ = false;
+}
+
+bool Valve::isOpen() const
+{
+    return isOpen_;
 }
 
 bool Valve::isOpenExpired(uint32_t currentTimeMs) const

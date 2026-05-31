@@ -11,7 +11,16 @@ public:
     void loop();
 
 private:
-    WaterHub &waterHub_;
+    static constexpr float WATER_COUNTER_TOLERANCE_LITERS = 0.1f;
+    static constexpr uint32_t UNAUTHORIZED_FLOW_ERROR_DELAY_MS = 10000;
 
+    WaterHub &waterHub_;
+    uint32_t magistralWaterCounterReadingRevision_ = 0;
+    uint32_t unauthorizedFlowDetectedTimeMs_ = 0;
+    bool unauthorizedFlowDetected_ = false;
+    bool unauthorizedFlowErrorLogged_ = false;
+
+    void checkUnauthorizedWaterFlow();
+    void closeAllValves();
     void closeExpiredValves();
 };
