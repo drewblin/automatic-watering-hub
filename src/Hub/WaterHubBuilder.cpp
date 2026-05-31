@@ -18,7 +18,7 @@ WaterHub WaterHubBuilder::build(Settings settings)
     auto magistralWaterCounter = std::make_unique<WaterCounter>(
         magistralWaterCounterSetting.getPin(),
         magistralWaterCounterSetting.getLitersPerTick(),
-        globalSettings.waterCounterReadIntervalSeconds);
+        globalSettings.idleWaterCounterReadIntervalSeconds);
     waterHub.setMagistralWaterCounter(std::move(magistralWaterCounter));
 
     for (WaterCounterSetting setting : settings.getLeafWaterCounterSetting())
@@ -26,7 +26,7 @@ WaterHub WaterHubBuilder::build(Settings settings)
         auto leafWaterCounter = std::make_unique<WaterCounter>(
             setting.getPin(),
             setting.getLitersPerTick(),
-            globalSettings.waterCounterReadIntervalSeconds);
+            globalSettings.idleWaterCounterReadIntervalSeconds);
         waterHub.addLeafWaterCounter(std::move(leafWaterCounter));
     }
 
@@ -34,7 +34,7 @@ WaterHub WaterHubBuilder::build(Settings settings)
         modbusNode_,
         modbusSerialPort_,
         settings.getPressureSensorSetting().getSlaveAddress(),
-        globalSettings.pressureSensorReadIntervalSeconds);
+        globalSettings.idlePressureSensorReadIntervalSeconds);
     waterHub.setPressureSensor(std::move(pressureSensor));
 
     std::unordered_map<std::uint8_t, SoilSensor *> soilSensorMap;
@@ -44,7 +44,7 @@ WaterHub WaterHubBuilder::build(Settings settings)
             modbusNode_,
             modbusSerialPort_,
             setting.getSlaveAddress(),
-            globalSettings.soilSensorReadIntervalSeconds);
+            globalSettings.idleSoilSensorReadIntervalSeconds);
         SoilSensor *soilSensorPtr = soilSensor.get();
 
         waterHub.addSoilSensor(std::move(soilSensor));

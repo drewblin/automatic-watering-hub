@@ -5,9 +5,12 @@ Settings::Settings()
     String payload = R"json(
 {
   "globalSettings": {
-    "waterCounterReadIntervalSeconds": 5,
-    "pressureSensorReadIntervalSeconds": 5,
-    "soilSensorReadIntervalSeconds": 5,
+    "idleWaterCounterReadIntervalSeconds": 5,
+    "wateringWaterCounterReadIntervalSeconds": 5,
+    "idlePressureSensorReadIntervalSeconds": 5,
+    "wateringPressureSensorReadIntervalSeconds": 5,
+    "idleSoilSensorReadIntervalSeconds": 5,
+    "wateringSoilSensorReadIntervalSeconds": 5,
     "maximumManualValveOpenTimeSeconds": 3600
   },
   "valveSettings": [
@@ -66,9 +69,12 @@ Settings::Settings()
 GlobalSettings Settings::getGlobalSettings()
 {
     return GlobalSettings{
-        (uint32_t)doc_["globalSettings"]["waterCounterReadIntervalSeconds"],
-        (uint32_t)doc_["globalSettings"]["pressureSensorReadIntervalSeconds"],
-        (uint32_t)doc_["globalSettings"]["soilSensorReadIntervalSeconds"],
+        (uint32_t)doc_["globalSettings"]["idleWaterCounterReadIntervalSeconds"],
+        (uint32_t)doc_["globalSettings"]["wateringWaterCounterReadIntervalSeconds"],
+        (uint32_t)doc_["globalSettings"]["idlePressureSensorReadIntervalSeconds"],
+        (uint32_t)doc_["globalSettings"]["wateringPressureSensorReadIntervalSeconds"],
+        (uint32_t)doc_["globalSettings"]["idleSoilSensorReadIntervalSeconds"],
+        (uint32_t)doc_["globalSettings"]["wateringSoilSensorReadIntervalSeconds"],
         (uint32_t)doc_["globalSettings"]["maximumManualValveOpenTimeSeconds"]};
 }
 
