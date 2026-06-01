@@ -68,7 +68,6 @@ void loop()
 {
     systemClock.loop();
     apiServerBluetooth->loop();
-    apiServerWifi->handleClient();
 
     if (waterHub == nullptr)
     {

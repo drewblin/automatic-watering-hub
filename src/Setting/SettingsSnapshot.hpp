@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <string>
 #include <vector>
 #include "GlobalSettings.hpp"
 #include "PressureSensorSetting.hpp"
@@ -13,6 +14,7 @@ struct SettingsSnapshot
 {
     GlobalSettings globalSettings;
     WifiSettings wifiSettings;
+    std::string apiAccessToken;
     std::vector<ValveSetting> valveSettings;
     std::optional<PressureSensorSetting> pressureSensorSetting;
     std::optional<WaterCounterSetting> magistralWaterCounterSetting;

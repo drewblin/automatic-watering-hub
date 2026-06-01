@@ -26,7 +26,8 @@ std::unique_ptr<ApiServerWifi> ApiServerWifiBuilder::build()
     return std::make_unique<ApiServerWifi>(
         ChangeDeviceAddressCommand(modbusNode_, modbusSerialPort_),
         GetSettingsCommand(settingsSnapShot_, clock_),
-        SaveSettingsCommand(settings_));
+        SaveSettingsCommand(settings_),
+        settingsSnapShot_.apiAccessToken);
 }
 
 void ApiServerWifiBuilder::enableWaterHubRoutes(

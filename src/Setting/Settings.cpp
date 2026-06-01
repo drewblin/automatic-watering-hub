@@ -1,5 +1,7 @@
 #include "Settings.hpp"
 
+#include <esp_system.h>
+
 namespace
 {
 constexpr char STORAGE_NAMESPACE[] = "watering";
@@ -20,6 +22,7 @@ constexpr char ZONE_WATERING_DURATION_KEY[] = "zoneDuration";
 constexpr char ZONE_WATERING_RETRY_DELAY_KEY[] = "zoneRetry";
 constexpr char WIFI_SSID_KEY[] = "wifiSsid";
 constexpr char WIFI_PASSWORD_KEY[] = "wifiPassword";
+constexpr char API_ACCESS_TOKEN_KEY[] = "apiToken";
 constexpr char VALVE_COUNT_KEY[] = "valveCount";
 constexpr char PRESSURE_SENSOR_ADDRESS_KEY[] = "pressureAddr";
 constexpr char MAGISTRAL_WATER_COUNTER_PIN_KEY[] = "mainWcPin";
@@ -82,8 +85,9 @@ void Settings::begin()
     snapshot_.globalSettings.zoneWateringDurationSeconds = readUInt(preferences, storageAvailable, ZONE_WATERING_DURATION_KEY, 5 * 60);
     snapshot_.globalSettings.zoneWateringRetryDelaySeconds = readUInt(preferences, storageAvailable, ZONE_WATERING_RETRY_DELAY_KEY, 15 * 60);
 
-    snapshot_.wifiSettings.ssid = readString(preferences, storageAvailable, WIFI_SSID_KEY, "Lypky").c_str();
-    snapshot_.wifiSettings.password = readString(preferences, storageAvailable, WIFI_PASSWORD_KEY, "79348454").c_str();
+    snapshot_.wifiSettings.ssid = readString(preferences, storageAvailable, WIFI_SSID_KEY, "").c_str();
+    snapshot_.wifiSettings.password = readString(preferences, storageAvailable, WIFI_PASSWORD_KEY, "").c_str();
+    snapshot_.apiAccessToken = readString(preferences, storageAvailable, API_ACCESS_TOKEN_KEY, "").c_str();
 
     uint8_t valveCount = readCount(preferences, storageAvailable, VALVE_COUNT_KEY);
     snapshot_.valveSettings.clear();
@@ -144,6 +148,22 @@ void Settings::begin()
     if (storageAvailable)
     {
         preferences.end();
+    }
+
+    if (snapshot_.apiAccessToken.empty())
+    {
+        snapshot_.apiAccessToken = generateApiAccessToken();
+        Preferences writablePreferences;
+        bool writableStorageAvailable = writablePreferences.begin(STORAGE_NAMESPACE, false);
+        if (!writableStorageAvailable ||
+            !putString(writablePreferences, API_ACCESS_TOKEN_KEY, snapshot_.apiAccessToken.c_str()))
+        {
+            ESP_LOGE("Settings", "Failed to persist generated API access token");
+        }
+        if (writableStorageAvailable)
+        {
+            writablePreferences.end();
+        }
     }
 }
 
@@ -268,6 +288,22 @@ bool Settings::saveWifiSettings(const WifiSettings &wifiSettings, String &error)
     }
 
     return true;
+}
+
+std::string Settings::generateApiAccessToken()
+{
+    static constexpr char HEX_DIGITS[] = "0123456789abcdef";
+    uint8_t randomBytes[32];
+    esp_fill_random(randomBytes, sizeof(randomBytes));
+
+    std::string token;
+    token.reserve(sizeof(randomBytes) * 2);
+    for (uint8_t value : randomBytes)
+    {
+        token += HEX_DIGITS[value >> 4];
+        token += HEX_DIGITS[value & 0x0f];
+    }
+    return token;
 }
 
 uint32_t Settings::readUInt(Preferences &preferences, bool storageAvailable, const char *key, uint32_t defaultValue)

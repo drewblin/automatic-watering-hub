@@ -37,10 +37,6 @@ ApiCommandResult GetSettingsCommand::execute()
     jsonGlobalSettings["zoneWateringDurationSeconds"] = globalSettings.zoneWateringDurationSeconds;
     jsonGlobalSettings["zoneWateringRetryDelaySeconds"] = globalSettings.zoneWateringRetryDelaySeconds;
 
-    WifiSettings wifiSettings = settings_.wifiSettings;
-    target["wifiSettings"]["ssid"] = wifiSettings.ssid;
-    target["wifiSettings"]["password"] = wifiSettings.password;
-
     JsonArray valves = target["valveSettings"].to<JsonArray>();
     for (ValveSetting setting : settings_.valveSettings)
     {

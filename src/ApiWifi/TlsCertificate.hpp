@@ -1,0 +1,27 @@
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+
+namespace TlsCertificate
+{
+inline constexpr uint8_t Certificate[] = R"pem(-----BEGIN CERTIFICATE-----
+MIIBozCCAUmgAwIBAgIUG2mksNdMlEpfkbylr562HTy8XlswCgYIKoZIzj0EAwIw
+JzElMCMGA1UEAwwcYXV0b21hdGljLXdhdGVyaW5nLWh1Yi5sb2NhbDAeFw0yNjA2
+MDExODI5NThaFw0zNjA1MjkxODI5NThaMCcxJTAjBgNVBAMMHGF1dG9tYXRpYy13
+YXRlcmluZy1odWIubG9jYWwwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQ5hR06
+M36Rq8aJxvwmeAqy537ThTtDD2dm+LHyZMSBUC/+L1pZfeKmPEwsjW7BH26JfdAI
+OpJq6upmZ7kUUXevo1MwUTAdBgNVHQ4EFgQU42PXLPTnaaR4XtW5kDYv1OIg7rgw
+HwYDVR0jBBgwFoAU42PXLPTnaaR4XtW5kDYv1OIg7rgwDwYDVR0TAQH/BAUwAwEB
+/zAKBggqhkjOPQQDAgNIADBFAiAc0F8od7zJvXYW7r5np36F/PNq8IzkdnET3aRJ
+sku97gIhAPfQH7ODMyNWhaiMao1Gk6ShmLQ0rK90CuImYcJrRHfo
+-----END CERTIFICATE-----
+)pem";
+
+inline constexpr uint8_t PrivateKey[] = R"pem(-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg6A312hCXoSnkWzHY
+YYew+us02agElEdBhJ5tZAN+JpyhRANCAAQ5hR06M36Rq8aJxvwmeAqy537ThTtD
+D2dm+LHyZMSBUC/+L1pZfeKmPEwsjW7BH26JfdAIOpJq6upmZ7kUUXev
+-----END PRIVATE KEY-----
+)pem";
+}

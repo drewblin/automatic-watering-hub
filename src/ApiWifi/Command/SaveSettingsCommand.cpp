@@ -12,14 +12,7 @@ SaveSettingsCommand::SaveSettingsCommand(Settings &settings)
 ApiCommandResult SaveSettingsCommand::execute(const JsonDocument &request)
 {
     ApiCommandResult result(400, false);
-    SettingsSnapshot snapshot{
-        {},
-        {},
-        {},
-        PressureSensorSetting(0),
-        WaterCounterSetting(0, "", 0),
-        {},
-        {}};
+    SettingsSnapshot snapshot = settings_.get();
     if (!parseSnapshot(request.as<JsonVariantConst>(), snapshot, result.error))
     {
         return result;
@@ -42,12 +35,10 @@ bool SaveSettingsCommand::parseSnapshot(JsonVariantConst json, SettingsSnapshot 
     static constexpr size_t MAX_SETTING_COUNT = 32;
 
     JsonObjectConst global;
-    JsonObjectConst wifi;
     JsonArrayConst valves;
     JsonArrayConst leafCounters;
     JsonArrayConst soilSensors;
     if (!JsonRequestReader::readRequiredObject(json, "globalSettings", global, error) ||
-        !JsonRequestReader::readRequiredObject(json, "wifiSettings", wifi, error) ||
         !JsonRequestReader::readRequiredArray(json, "valveSettings", valves, error) ||
         !JsonRequestReader::readRequiredArray(json, "leafWaterCounterSettings", leafCounters, error) ||
         !JsonRequestReader::readRequiredArray(json, "soilSensorSettings", soilSensors, error))
@@ -134,13 +125,6 @@ bool SaveSettingsCommand::parseSnapshot(JsonVariantConst json, SettingsSnapshot 
         return false;
     }
     parsedGlobal.wateringStartMode = parsedMode.value();
-
-    WifiSettings parsedWifi;
-    if (!JsonRequestReader::readRequiredString(wifi, "ssid", parsedWifi.ssid, error) ||
-        !JsonRequestReader::readRequiredString(wifi, "password", parsedWifi.password, error))
-    {
-        return false;
-    }
 
     uint8_t pressureAddress = 0;
     std::optional<PressureSensorSetting> parsedPressureSensor;
@@ -264,13 +248,11 @@ bool SaveSettingsCommand::parseSnapshot(JsonVariantConst json, SettingsSnapshot 
         parsedLeafCounters.emplace_back(pin, name, litersPerTick);
     }
 
-    snapshot = SettingsSnapshot{
-        parsedGlobal,
-        parsedWifi,
-        parsedValves,
-        parsedPressureSensor,
-        parsedMagistralWaterCounter,
-        parsedLeafCounters,
-        parsedSoilSensors};
+    snapshot.globalSettings = parsedGlobal;
+    snapshot.valveSettings = parsedValves;
+    snapshot.pressureSensorSetting = parsedPressureSensor;
+    snapshot.magistralWaterCounterSetting = parsedMagistralWaterCounter;
+    snapshot.leafWaterCounterSettings = parsedLeafCounters;
+    snapshot.soilSensorSettings = parsedSoilSensors;
     return true;
 }

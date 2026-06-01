@@ -6,31 +6,52 @@
 ApiServerBluetooth::ApiServerBluetooth(
     GetWifiSettingsCommand getWifiSettingsCommand,
     SaveWifiSettingsCommand saveWifiSettingsCommand,
-    GetWifiIpAddressCommand getWifiIpAddressCommand)
+    GetWifiIpAddressCommand getWifiIpAddressCommand,
+    GetApiAccessTokenCommand getApiAccessTokenCommand)
     : getWifiSettingsCommand_(getWifiSettingsCommand),
       saveWifiSettingsCommand_(saveWifiSettingsCommand),
-      getWifiIpAddressCommand_(getWifiIpAddressCommand)
+      getWifiIpAddressCommand_(getWifiIpAddressCommand),
+      getApiAccessTokenCommand_(getApiAccessTokenCommand)
 {
 }
 
 void ApiServerBluetooth::begin()
 {
     NimBLEDevice::init(DeviceName);
+    NimBLEDevice::setSecurityAuth(true, true, true);
+    NimBLEDevice::setSecurityPasskey(AccessPasskey);
+    NimBLEDevice::setSecurityIOCap(BLE_HS_IO_DISPLAY_ONLY);
+
     NimBLEServer *server = NimBLEDevice::createServer();
     NimBLEService *service = server->createService(ServiceUuid);
     wifiSettingsCharacteristic_ = service->createCharacteristic(
         WifiSettingsUuid,
-        NIMBLE_PROPERTY::READ);
+        NIMBLE_PROPERTY::READ |
+            NIMBLE_PROPERTY::READ_ENC |
+            NIMBLE_PROPERTY::READ_AUTHEN);
     saveWifiSettingsCharacteristic_ = service->createCharacteristic(
         SaveWifiSettingsUuid,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        NIMBLE_PROPERTY::READ |
+            NIMBLE_PROPERTY::READ_ENC |
+            NIMBLE_PROPERTY::READ_AUTHEN |
+            NIMBLE_PROPERTY::WRITE |
+            NIMBLE_PROPERTY::WRITE_ENC |
+            NIMBLE_PROPERTY::WRITE_AUTHEN);
     wifiIpAddressCharacteristic_ = service->createCharacteristic(
         WifiIpAddressUuid,
-        NIMBLE_PROPERTY::READ);
+        NIMBLE_PROPERTY::READ |
+            NIMBLE_PROPERTY::READ_ENC |
+            NIMBLE_PROPERTY::READ_AUTHEN);
+    apiAccessTokenCharacteristic_ = service->createCharacteristic(
+        ApiAccessTokenUuid,
+        NIMBLE_PROPERTY::READ |
+            NIMBLE_PROPERTY::READ_ENC |
+            NIMBLE_PROPERTY::READ_AUTHEN);
 
     wifiSettingsCharacteristic_->setCallbacks(this);
     saveWifiSettingsCharacteristic_->setCallbacks(this);
     wifiIpAddressCharacteristic_->setCallbacks(this);
+    apiAccessTokenCharacteristic_->setCallbacks(this);
 
     server->start();
     NimBLEAdvertising *advertising = NimBLEDevice::getAdvertising();
@@ -56,6 +77,10 @@ void ApiServerBluetooth::onRead(NimBLECharacteristic *characteristic, NimBLEConn
     else if (characteristic == wifiIpAddressCharacteristic_)
     {
         sendCommandResult(*characteristic, getWifiIpAddressCommand_.execute());
+    }
+    else if (characteristic == apiAccessTokenCharacteristic_)
+    {
+        sendCommandResult(*characteristic, getApiAccessTokenCommand_.execute());
     }
 }
 

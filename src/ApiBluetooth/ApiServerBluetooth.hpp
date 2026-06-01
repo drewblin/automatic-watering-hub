@@ -1,6 +1,7 @@
 #pragma once
 
 #include "NimBLECharacteristic.h"
+#include "Command/GetApiAccessTokenCommand.hpp"
 #include "Command/GetWifiIpAddressCommand.hpp"
 #include "Command/GetWifiSettingsCommand.hpp"
 #include "Command/SaveWifiSettingsCommand.hpp"
@@ -13,11 +14,14 @@ public:
     static constexpr char WifiSettingsUuid[] = "4d42b2d1-35ba-4b70-b8a2-d1cf01e904c1";
     static constexpr char SaveWifiSettingsUuid[] = "4d42b2d2-35ba-4b70-b8a2-d1cf01e904c1";
     static constexpr char WifiIpAddressUuid[] = "4d42b2d3-35ba-4b70-b8a2-d1cf01e904c1";
+    static constexpr char ApiAccessTokenUuid[] = "4d42b2d4-35ba-4b70-b8a2-d1cf01e904c1";
+    static constexpr uint32_t AccessPasskey = 482917;
 
     ApiServerBluetooth(
         GetWifiSettingsCommand getWifiSettingsCommand,
         SaveWifiSettingsCommand saveWifiSettingsCommand,
-        GetWifiIpAddressCommand getWifiIpAddressCommand);
+        GetWifiIpAddressCommand getWifiIpAddressCommand,
+        GetApiAccessTokenCommand getApiAccessTokenCommand);
 
     void begin();
     void loop();
@@ -46,8 +50,10 @@ private:
     GetWifiSettingsCommand getWifiSettingsCommand_;
     SaveWifiSettingsCommand saveWifiSettingsCommand_;
     GetWifiIpAddressCommand getWifiIpAddressCommand_;
+    GetApiAccessTokenCommand getApiAccessTokenCommand_;
     NimBLECharacteristic *wifiSettingsCharacteristic_ = nullptr;
     NimBLECharacteristic *saveWifiSettingsCharacteristic_ = nullptr;
     NimBLECharacteristic *wifiIpAddressCharacteristic_ = nullptr;
+    NimBLECharacteristic *apiAccessTokenCharacteristic_ = nullptr;
     bool restartScheduled_ = false;
 };

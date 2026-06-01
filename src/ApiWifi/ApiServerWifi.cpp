@@ -1,114 +1,173 @@
 #include "ApiServerWifi.hpp"
 
 #include <Arduino.h>
+#include "TlsCertificate.hpp"
+#include "esp_https_server.h"
 
 ApiServerWifi::ApiServerWifi(
     ChangeDeviceAddressCommand changeDeviceAddressCommand,
     GetSettingsCommand getSettingsCommand,
     SaveSettingsCommand saveSettingsCommand,
+    const std::string &apiAccessToken,
     uint16_t port)
     : changeDeviceAddressCommand_(changeDeviceAddressCommand),
       getSettingsCommand_(getSettingsCommand),
       saveSettingsCommand_(saveSettingsCommand),
-      server_(port)
+      apiAccessToken_(apiAccessToken),
+      port_(port)
 {
-    server_.on("/api/modbus/device-address", HTTP_POST, [this]()
-               { handleChangeDeviceAddress(); });
-    server_.on("/api/settings", HTTP_GET, [this]()
-               { handleGetSettings(); });
-    server_.on("/api/settings", HTTP_PUT, [this]()
-               { handleSaveSettings(); });
-
-    server_.onNotFound([this]()
-                       {
-                           ApiCommandResult result(404, false);
-                           result.error = "Not found";
-                           sendCommandResult(result);
-                       });
 }
 
 void ApiServerWifi::registerWaterHubRoutes(
     std::unique_ptr<OpenValveForTimeCommand> openValveForTimeCommand)
 {
     openValveForTimeCommand_ = std::move(openValveForTimeCommand);
-
-    server_.on("/api/valves/open-for-time", HTTP_POST, [this]()
-               { handleOpenValveForTime(); });
 }
 
 void ApiServerWifi::begin()
 {
-    server_.begin();
-}
+    httpd_ssl_config_t config = HTTPD_SSL_CONFIG_DEFAULT();
+    config.port_secure = port_;
+    config.servercert = TlsCertificate::Certificate;
+    config.servercert_len = sizeof(TlsCertificate::Certificate);
+    config.prvtkey_pem = TlsCertificate::PrivateKey;
+    config.prvtkey_len = sizeof(TlsCertificate::PrivateKey);
 
-void ApiServerWifi::handleClient()
-{
-    server_.handleClient();
-}
-
-void ApiServerWifi::handleChangeDeviceAddress()
-{
-    /*
-curl -X POST http://192.168.0.104/api/modbus/device-address \
--H "Content-Type: application/json" \
--d '{
-    "currentAddress": 1,
-    "newAddress": 2,
-    "registerAddress": 0 (48 for soil sensor, 0 for pressure sensor),
-    "saveRegisterAddress": 15, (null for soil sensor, 15 for pressure sensor)
-    "saveValue": 0 (null for soil sensor, 0 for pressure sensor)
-}'
-    */
-
-    sendCommandResult(execute(changeDeviceAddressCommand_));
-}
-
-void ApiServerWifi::handleOpenValveForTime()
-{
-    /*
-curl -X POST http://192.168.0.104/api/valves/open-for-time \
--H "Content-Type: application/json" \
--d '{
-    "pin": 22,
-    "seconds": 10
-}'
-    */
-
-    if (openValveForTimeCommand_ == nullptr)
+    if (httpd_ssl_start(&server_, &config) != ESP_OK)
     {
-        ApiCommandResult result(503, false);
-        result.error = "Water hub is not available";
-        sendCommandResult(result);
+        ESP_LOGE("ApiServerWifi", "Failed to start HTTPS server");
         return;
     }
 
-    sendCommandResult(execute(*openValveForTimeCommand_));
-}
+    httpd_uri_t changeDeviceAddress = {
+        .uri = "/api/modbus/device-address",
+        .method = HTTP_POST,
+        .handler = handleChangeDeviceAddress,
+        .user_ctx = this};
+    httpd_register_uri_handler(server_, &changeDeviceAddress);
 
-void ApiServerWifi::handleGetSettings()
-{
-    sendCommandResult(getSettingsCommand_.execute());
-}
+    httpd_uri_t getSettings = {
+        .uri = "/api/settings",
+        .method = HTTP_GET,
+        .handler = handleGetSettings,
+        .user_ctx = this};
+    httpd_register_uri_handler(server_, &getSettings);
 
-void ApiServerWifi::handleSaveSettings()
-{
-    ApiCommandResult result = execute(saveSettingsCommand_);
-    sendCommandResult(result);
-    if (!result.success)
+    httpd_uri_t saveSettings = {
+        .uri = "/api/settings",
+        .method = HTTP_PUT,
+        .handler = handleSaveSettings,
+        .user_ctx = this};
+    httpd_register_uri_handler(server_, &saveSettings);
+
+    if (openValveForTimeCommand_ != nullptr)
     {
-        return;
+        httpd_uri_t openValveForTime = {
+            .uri = "/api/valves/open-for-time",
+            .method = HTTP_POST,
+            .handler = handleOpenValveForTime,
+            .user_ctx = this};
+        httpd_register_uri_handler(server_, &openValveForTime);
+    }
+}
+
+bool ApiServerWifi::authorize(httpd_req_t &request) const
+{
+    size_t headerLength = httpd_req_get_hdr_value_len(&request, AUTHORIZATION_HEADER);
+    if (headerLength == 0 || headerLength > apiAccessToken_.size() + strlen(BEARER_PREFIX))
+    {
+        return false;
     }
 
-    delay(100);
-    ESP.restart();
+    std::string header(headerLength + 1, '\0');
+    if (httpd_req_get_hdr_value_str(&request, AUTHORIZATION_HEADER, header.data(), header.size()) != ESP_OK)
+    {
+        return false;
+    }
+    header.resize(headerLength);
+    return header == std::string(BEARER_PREFIX) + apiAccessToken_;
 }
 
-void ApiServerWifi::sendCommandResult(const ApiCommandResult &result)
+ApiCommandResult ApiServerWifi::readRequestBody(httpd_req_t &request, String &payload) const
+{
+    if (request.content_len > MAX_REQUEST_BODY_SIZE)
+    {
+        ApiCommandResult result(413, false);
+        result.error = "Request body is too large";
+        return result;
+    }
+
+    payload.reserve(request.content_len);
+    while (payload.length() < request.content_len)
+    {
+        char buffer[512];
+        size_t bytesToRead = min(sizeof(buffer), request.content_len - payload.length());
+        int received = httpd_req_recv(&request, buffer, bytesToRead);
+        if (received <= 0)
+        {
+            ApiCommandResult result(400, false);
+            result.error = "Failed to read request body";
+            return result;
+        }
+        payload.concat(buffer, received);
+    }
+    return ApiCommandResult(200, true);
+}
+
+esp_err_t ApiServerWifi::handleChangeDeviceAddress(httpd_req_t *request)
+{
+    ApiServerWifi *server = static_cast<ApiServerWifi *>(request->user_ctx);
+    return server->authorizeAndHandle(*request, [&]()
+    {
+        return server->sendCommandResult(*request, server->execute(server->changeDeviceAddressCommand_, *request));
+    });
+}
+
+esp_err_t ApiServerWifi::handleOpenValveForTime(httpd_req_t *request)
+{
+    ApiServerWifi *server = static_cast<ApiServerWifi *>(request->user_ctx);
+    return server->authorizeAndHandle(*request, [&]()
+    {
+        if (server->openValveForTimeCommand_ == nullptr)
+        {
+            ApiCommandResult result(503, false);
+            result.error = "Water hub is not available";
+            return server->sendCommandResult(*request, result);
+        }
+        return server->sendCommandResult(*request, server->execute(*server->openValveForTimeCommand_, *request));
+    });
+}
+
+esp_err_t ApiServerWifi::handleGetSettings(httpd_req_t *request)
+{
+    ApiServerWifi *server = static_cast<ApiServerWifi *>(request->user_ctx);
+    return server->authorizeAndHandle(*request, [&]()
+    {
+        return server->sendCommandResult(*request, server->getSettingsCommand_.execute());
+    });
+}
+
+esp_err_t ApiServerWifi::handleSaveSettings(httpd_req_t *request)
+{
+    ApiServerWifi *server = static_cast<ApiServerWifi *>(request->user_ctx);
+    return server->authorizeAndHandle(*request, [&]()
+    {
+        ApiCommandResult result = server->execute(server->saveSettingsCommand_, *request);
+        esp_err_t responseResult = server->sendCommandResult(*request, result);
+        if (result.success)
+        {
+            delay(100);
+            ESP.restart();
+        }
+        return responseResult;
+    });
+}
+
+esp_err_t ApiServerWifi::sendCommandResult(httpd_req_t &request, const ApiCommandResult &result) const
 {
     JsonDocument response;
     response["success"] = result.success;
     response["data"] = result.data.as<JsonVariantConst>();
-
     if (result.error.length() > 0)
     {
         response["error"] = result.error;
@@ -120,5 +179,7 @@ void ApiServerWifi::sendCommandResult(const ApiCommandResult &result)
 
     String payload;
     serializeJson(response, payload);
-    server_.send(result.statusCode, "application/json", payload);
+    httpd_resp_set_status(&request, result.getHttpStatus());
+    httpd_resp_set_type(&request, HTTPD_TYPE_JSON);
+    return httpd_resp_send(&request, payload.c_str(), payload.length());
 }
