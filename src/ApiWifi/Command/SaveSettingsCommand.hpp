@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ApiCommandResult.hpp"
+#include "Api/ApiCommandResult.hpp"
 #include "Setting/Settings.hpp"
 
 class SaveSettingsCommand

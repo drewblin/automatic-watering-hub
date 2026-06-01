@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ApiCommandResult.hpp"
+#include "Api/ApiCommandResult.hpp"
 #include "Hub/WaterHub.hpp"
 #include "Setting/SettingsSnapshot.hpp"
 
@@ -14,5 +14,5 @@ public:
 
 private:
     WaterHub &waterHub_;
-    const SettingsSnapshot &settings_;
+    const SettingsSnapshot settings_;
 };

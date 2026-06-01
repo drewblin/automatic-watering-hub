@@ -1,8 +1,8 @@
-#include "ApiServer.hpp"
+#include "ApiServerWifi.hpp"
 
 #include <Arduino.h>
 
-ApiServer::ApiServer(
+ApiServerWifi::ApiServerWifi(
     ChangeDeviceAddressCommand changeDeviceAddressCommand,
     GetSettingsCommand getSettingsCommand,
     SaveSettingsCommand saveSettingsCommand,
@@ -27,7 +27,7 @@ ApiServer::ApiServer(
                        });
 }
 
-void ApiServer::registerWaterHubRoutes(
+void ApiServerWifi::registerWaterHubRoutes(
     std::unique_ptr<OpenValveForTimeCommand> openValveForTimeCommand)
 {
     openValveForTimeCommand_ = std::move(openValveForTimeCommand);
@@ -36,17 +36,17 @@ void ApiServer::registerWaterHubRoutes(
                { handleOpenValveForTime(); });
 }
 
-void ApiServer::begin()
+void ApiServerWifi::begin()
 {
     server_.begin();
 }
 
-void ApiServer::handleClient()
+void ApiServerWifi::handleClient()
 {
     server_.handleClient();
 }
 
-void ApiServer::handleChangeDeviceAddress()
+void ApiServerWifi::handleChangeDeviceAddress()
 {
     /*
 curl -X POST http://192.168.0.104/api/modbus/device-address \
@@ -63,7 +63,7 @@ curl -X POST http://192.168.0.104/api/modbus/device-address \
     sendCommandResult(execute(changeDeviceAddressCommand_));
 }
 
-void ApiServer::handleOpenValveForTime()
+void ApiServerWifi::handleOpenValveForTime()
 {
     /*
 curl -X POST http://192.168.0.104/api/valves/open-for-time \
@@ -85,12 +85,12 @@ curl -X POST http://192.168.0.104/api/valves/open-for-time \
     sendCommandResult(execute(*openValveForTimeCommand_));
 }
 
-void ApiServer::handleGetSettings()
+void ApiServerWifi::handleGetSettings()
 {
     sendCommandResult(getSettingsCommand_.execute());
 }
 
-void ApiServer::handleSaveSettings()
+void ApiServerWifi::handleSaveSettings()
 {
     ApiCommandResult result = execute(saveSettingsCommand_);
     sendCommandResult(result);
@@ -103,7 +103,7 @@ void ApiServer::handleSaveSettings()
     ESP.restart();
 }
 
-void ApiServer::sendCommandResult(const ApiCommandResult &result)
+void ApiServerWifi::sendCommandResult(const ApiCommandResult &result)
 {
     JsonDocument response;
     response["success"] = result.success;

@@ -1,4 +1,4 @@
-#include "ApiServerBuilder.hpp"
+#include "ApiServerWifiBuilder.hpp"
 
 #include <memory>
 
@@ -7,7 +7,7 @@
 #include "Command/SaveSettingsCommand.hpp"
 #include "Command/OpenValveForTimeCommand.hpp"
 
-ApiServerBuilder::ApiServerBuilder(
+ApiServerWifiBuilder::ApiServerWifiBuilder(
     ModbusMaster &modbusNode,
     HardwareSerial &modbusSerialPort,
     const SettingsSnapshot &settingsSnapshot,
@@ -21,18 +21,18 @@ ApiServerBuilder::ApiServerBuilder(
 {
 }
 
-std::unique_ptr<ApiServer> ApiServerBuilder::build()
+std::unique_ptr<ApiServerWifi> ApiServerWifiBuilder::build()
 {
-    return std::make_unique<ApiServer>(
+    return std::make_unique<ApiServerWifi>(
         ChangeDeviceAddressCommand(modbusNode_, modbusSerialPort_),
         GetSettingsCommand(settingsSnapShot_, clock_),
         SaveSettingsCommand(settings_));
 }
 
-void ApiServerBuilder::enableWaterHubRoutes(
-    ApiServer &apiServer,
+void ApiServerWifiBuilder::enableWaterHubRoutes(
+    ApiServerWifi &apiServerWifi,
     WaterHub &waterHub)
 {
-    apiServer.registerWaterHubRoutes(
+    apiServerWifi.registerWaterHubRoutes(
         std::make_unique<OpenValveForTimeCommand>(waterHub, settingsSnapShot_));
 }

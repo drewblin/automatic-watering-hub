@@ -40,6 +40,32 @@
 ### Керування додатком через BLE
 Зашитий пароль для доступу
 
+BLE device name: `Automatic Watering Hub`.
+
+Service UUID: `4d42b2d0-35ba-4b70-b8a2-d1cf01e904c1`.
+
+Characteristics:
+1. `4d42b2d1-35ba-4b70-b8a2-d1cf01e904c1` (`READ`) - повертає поточні Wifi settings.
+2. `4d42b2d2-35ba-4b70-b8a2-d1cf01e904c1` (`READ`, `WRITE`) - приймає нові Wifi settings і перезапускає контролер після успішного збереження.
+3. `4d42b2d3-35ba-4b70-b8a2-d1cf01e904c1` (`READ`) - повертає поточну Wifi IP адресу.
+
+Payload для запису Wifi settings:
+```json
+{
+  "ssid": "network-name",
+  "password": "network-password"
+}
+```
+
+Всі відповіді характеристик мають формат:
+```json
+{
+  "success": true,
+  "data": {},
+  "error": null
+}
+```
+
 ### Керування додатком через Wifi
 Зашитий пароль для доступу.
 Передає в хмару логи.

@@ -8,10 +8,10 @@
 #include "Command/SaveSettingsCommand.hpp"
 #include "WebServer.h"
 
-class ApiServer
+class ApiServerWifi
 {
 public:
-    ApiServer(
+    ApiServerWifi(
         ChangeDeviceAddressCommand changeDeviceAddressCommand,
         GetSettingsCommand getSettingsCommand,
         SaveSettingsCommand saveSettingsCommand,

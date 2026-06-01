@@ -1,25 +1,25 @@
 #pragma once
 
 #include <memory>
-#include "ApiServer.hpp"
+#include "ApiServerWifi.hpp"
 #include "Clock/Clock.hpp"
 #include "Command/SaveSettingsCommand.hpp"
 #include "ModbusMaster.h"
 #include "Setting/Settings.hpp"
 
-class ApiServerBuilder
+class ApiServerWifiBuilder
 {
 public:
-    ApiServerBuilder(
+    ApiServerWifiBuilder(
         ModbusMaster &modbusNode,
         HardwareSerial &modbusSerialPort,
         const SettingsSnapshot &settingsSnapshot,
         Settings &settings,
         Clock &clock);
 
-    std::unique_ptr<ApiServer> build();
+    std::unique_ptr<ApiServerWifi> build();
     void enableWaterHubRoutes(
-        ApiServer &apiServer,
+        ApiServerWifi &apiServerWifi,
         WaterHub &waterHub);
 
 private:

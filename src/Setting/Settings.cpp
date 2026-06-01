@@ -173,8 +173,8 @@ bool Settings::save(const SettingsSnapshot &snapshot, String &error)
         preferences.putUChar(SCHEDULED_WATERING_START_MINUTE_KEY, storedStartTime.minute) > 0 &&
         preferences.putUInt(ZONE_WATERING_DURATION_KEY, snapshot.globalSettings.zoneWateringDurationSeconds) > 0 &&
         preferences.putUInt(ZONE_WATERING_RETRY_DELAY_KEY, snapshot.globalSettings.zoneWateringRetryDelaySeconds) > 0 &&
-        preferences.putString(WIFI_SSID_KEY, snapshot.wifiSettings.ssid.c_str()) > 0 &&
-        preferences.putString(WIFI_PASSWORD_KEY, snapshot.wifiSettings.password.c_str()) > 0;
+        putString(preferences, WIFI_SSID_KEY, snapshot.wifiSettings.ssid.c_str()) &&
+        putString(preferences, WIFI_PASSWORD_KEY, snapshot.wifiSettings.password.c_str());
 
     if (saved && snapshot.hasPressureSensorSetting())
     {
@@ -189,7 +189,7 @@ bool Settings::save(const SettingsSnapshot &snapshot, String &error)
     {
         saved =
             preferences.putUChar(MAGISTRAL_WATER_COUNTER_PIN_KEY, snapshot.magistralWaterCounterSetting->getPin()) > 0 &&
-            preferences.putString(MAGISTRAL_WATER_COUNTER_NAME_KEY, snapshot.magistralWaterCounterSetting->getName().c_str()) > 0 &&
+            putString(preferences, MAGISTRAL_WATER_COUNTER_NAME_KEY, snapshot.magistralWaterCounterSetting->getName().c_str()) &&
             preferences.putFloat(MAGISTRAL_WATER_COUNTER_LITERS_PER_TICK_KEY, snapshot.magistralWaterCounterSetting->getLitersPerTick()) > 0;
     }
     else if (saved)
@@ -213,7 +213,7 @@ bool Settings::save(const SettingsSnapshot &snapshot, String &error)
         String prefix = VALVE_PREFIX + String(i);
         saved =
             preferences.putUChar((prefix + PIN_SUFFIX).c_str(), snapshot.valveSettings[i].getPin()) > 0 &&
-            preferences.putString((prefix + NAME_SUFFIX).c_str(), snapshot.valveSettings[i].getName().c_str()) > 0 &&
+            putString(preferences, (prefix + NAME_SUFFIX).c_str(), snapshot.valveSettings[i].getName().c_str()) &&
             preferences.putUChar((prefix + SOIL_SENSOR_SUFFIX).c_str(), snapshot.valveSettings[i].getSoilSensorSlaveAddress()) > 0;
     }
     for (uint8_t i = 0; saved && i < snapshot.leafWaterCounterSettings.size(); ++i)
@@ -221,7 +221,7 @@ bool Settings::save(const SettingsSnapshot &snapshot, String &error)
         String prefix = LEAF_WATER_COUNTER_PREFIX + String(i);
         saved =
             preferences.putUChar((prefix + PIN_SUFFIX).c_str(), snapshot.leafWaterCounterSettings[i].getPin()) > 0 &&
-            preferences.putString((prefix + NAME_SUFFIX).c_str(), snapshot.leafWaterCounterSettings[i].getName().c_str()) > 0 &&
+            putString(preferences, (prefix + NAME_SUFFIX).c_str(), snapshot.leafWaterCounterSettings[i].getName().c_str()) &&
             preferences.putFloat((prefix + LITERS_PER_TICK_SUFFIX).c_str(), snapshot.leafWaterCounterSettings[i].getLitersPerTick()) > 0;
     }
     for (uint8_t i = 0; saved && i < snapshot.soilSensorSettings.size(); ++i)
@@ -229,7 +229,7 @@ bool Settings::save(const SettingsSnapshot &snapshot, String &error)
         String prefix = SOIL_SENSOR_PREFIX + String(i);
         saved =
             preferences.putUChar((prefix + ADDRESS_SUFFIX).c_str(), snapshot.soilSensorSettings[i].getSlaveAddress()) > 0 &&
-            preferences.putString((prefix + NAME_SUFFIX).c_str(), snapshot.soilSensorSettings[i].getName().c_str()) > 0;
+            putString(preferences, (prefix + NAME_SUFFIX).c_str(), snapshot.soilSensorSettings[i].getName().c_str());
     }
     saved =
         saved &&
@@ -241,6 +241,29 @@ bool Settings::save(const SettingsSnapshot &snapshot, String &error)
     if (!saved)
     {
         error = "Failed to save settings";
+        return false;
+    }
+
+    return true;
+}
+
+bool Settings::saveWifiSettings(const WifiSettings &wifiSettings, String &error)
+{
+    Preferences preferences;
+    if (!preferences.begin(STORAGE_NAMESPACE, false))
+    {
+        error = "Failed to open settings storage";
+        return false;
+    }
+
+    bool saved =
+        putString(preferences, WIFI_SSID_KEY, wifiSettings.ssid.c_str()) &&
+        putString(preferences, WIFI_PASSWORD_KEY, wifiSettings.password.c_str());
+    preferences.end();
+
+    if (!saved)
+    {
+        error = "Failed to save WiFi settings";
         return false;
     }
 
@@ -303,6 +326,12 @@ String Settings::readString(Preferences &preferences, bool storageAvailable, con
         return defaultValue;
     }
     return preferences.getString(key, defaultValue);
+}
+
+bool Settings::putString(Preferences &preferences, const char *key, const char *value)
+{
+    size_t savedLength = preferences.putString(key, value);
+    return savedLength == strlen(value) && preferences.getString(key) == value;
 }
 
 bool Settings::hasRequiredKey(Preferences &preferences, bool storageAvailable, const char *key)

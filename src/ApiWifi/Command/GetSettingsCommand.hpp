@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ApiCommandResult.hpp"
+#include "Api/ApiCommandResult.hpp"
 #include "Clock/Clock.hpp"
 #include "Setting/SettingsSnapshot.hpp"
 
@@ -11,6 +11,6 @@ public:
     ApiCommandResult execute();
 
 private:
-    const SettingsSnapshot &settings_;
+    const SettingsSnapshot settings_;
     Clock &clock_;
 };

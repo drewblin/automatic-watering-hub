@@ -1,6 +1,7 @@
 #include <memory>
 #include "AutomaticWatering/AutomaticWatering.hpp"
-#include "Api/ApiServerBuilder.hpp"
+#include "ApiBluetooth/ApiServerBluetoothBuilder.hpp"
+#include "ApiWifi/ApiServerWifiBuilder.hpp"
 #include "Clock/Clock.hpp"
 #include "Connectivity/WifiConnection.hpp"
 #include "Hub/WaterHubBuilder.hpp"
@@ -16,7 +17,8 @@ std::unique_ptr<WifiConnection> wifiConnection;
 std::unique_ptr<WaterHub> waterHub;
 std::unique_ptr<Hypervisor> hypervisor;
 std::unique_ptr<AutomaticWatering> automaticWatering;
-std::unique_ptr<ApiServer> apiServer;
+std::unique_ptr<ApiServerBluetooth> apiServerBluetooth;
+std::unique_ptr<ApiServerWifi> apiServerWifi;
 
 void setup()
 {
@@ -32,13 +34,16 @@ void setup()
 
     systemClock.begin();
 
-    ApiServerBuilder apiServerBuilder(
+    ApiServerBluetoothBuilder apiServerBluetoothBuilder(settingsSnapshot, settings);
+    apiServerBluetooth = apiServerBluetoothBuilder.build();
+
+    ApiServerWifiBuilder apiServerWifiBuilder(
         modbusNode,
         Serial2,
         settingsSnapshot,
         settings,
         systemClock);
-    apiServer = apiServerBuilder.build();
+    apiServerWifi = apiServerWifiBuilder.build();
 
     if (settingsSnapshot.hasRequiredWaterHubSettings())
     {
@@ -46,7 +51,7 @@ void setup()
         hypervisor = std::make_unique<Hypervisor>(*waterHub);
         automaticWatering = std::make_unique<AutomaticWatering>(*waterHub);
 
-        apiServerBuilder.enableWaterHubRoutes(*apiServer, *waterHub);
+        apiServerWifiBuilder.enableWaterHubRoutes(*apiServerWifi, *waterHub);
 
         hypervisor->begin();
     }
@@ -55,13 +60,15 @@ void setup()
         ESP_LOGE("Main", "Water hub is disabled because required settings are missing");
     }
 
-    apiServer->begin();
+    apiServerBluetooth->begin();
+    apiServerWifi->begin();
 }
 
 void loop()
 {
     systemClock.loop();
-    apiServer->handleClient();
+    apiServerBluetooth->loop();
+    apiServerWifi->handleClient();
 
     if (waterHub == nullptr)
     {

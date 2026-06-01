@@ -18,6 +18,7 @@ public:
     void begin();
     SettingsSnapshot get() const;
     bool save(const SettingsSnapshot &snapshot, String &error);
+    bool saveWifiSettings(const WifiSettings &wifiSettings, String &error);
 
 private:
     static uint32_t readUInt(
@@ -44,6 +45,10 @@ private:
         bool storageAvailable,
         const char *key,
         const String &defaultValue);
+    static bool putString(
+        Preferences &preferences,
+        const char *key,
+        const char *value);
     static bool hasRequiredKey(
         Preferences &preferences,
         bool storageAvailable,
