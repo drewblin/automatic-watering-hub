@@ -15,6 +15,7 @@ public:
     static constexpr char SaveWifiSettingsUuid[] = "4d42b2d2-35ba-4b70-b8a2-d1cf01e904c1";
     static constexpr char WifiIpAddressUuid[] = "4d42b2d3-35ba-4b70-b8a2-d1cf01e904c1";
     static constexpr char ApiAccessTokenUuid[] = "4d42b2d4-35ba-4b70-b8a2-d1cf01e904c1";
+    static constexpr char LogNotificationsUuid[] = "4d42b2d5-35ba-4b70-b8a2-d1cf01e904c1";
     static constexpr uint32_t AccessPasskey = 482917;
 
     ApiServerBluetooth(
@@ -55,5 +56,6 @@ private:
     NimBLECharacteristic *saveWifiSettingsCharacteristic_ = nullptr;
     NimBLECharacteristic *wifiIpAddressCharacteristic_ = nullptr;
     NimBLECharacteristic *apiAccessTokenCharacteristic_ = nullptr;
+    NimBLECharacteristic *logNotificationsCharacteristic_ = nullptr;
     bool restartScheduled_ = false;
 };

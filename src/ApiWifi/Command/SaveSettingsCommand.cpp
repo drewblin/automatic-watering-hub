@@ -35,10 +35,12 @@ bool SaveSettingsCommand::parseSnapshot(JsonVariantConst json, SettingsSnapshot 
     static constexpr size_t MAX_SETTING_COUNT = 32;
 
     JsonObjectConst global;
+    JsonObjectConst remoteLogSettings;
     JsonArrayConst valves;
     JsonArrayConst leafCounters;
     JsonArrayConst soilSensors;
     if (!JsonRequestReader::readRequiredObject(json, "globalSettings", global, error) ||
+        !JsonRequestReader::readRequiredObject(json, "remoteLogSettings", remoteLogSettings, error) ||
         !JsonRequestReader::readRequiredArray(json, "valveSettings", valves, error) ||
         !JsonRequestReader::readRequiredArray(json, "leafWaterCounterSettings", leafCounters, error) ||
         !JsonRequestReader::readRequiredArray(json, "soilSensorSettings", soilSensors, error))
@@ -125,6 +127,14 @@ bool SaveSettingsCommand::parseSnapshot(JsonVariantConst json, SettingsSnapshot 
         return false;
     }
     parsedGlobal.wateringStartMode = parsedMode.value();
+
+    std::string remoteLogUrl;
+    std::string remoteLogToken;
+    if (!JsonRequestReader::readRequiredString(remoteLogSettings, "url", remoteLogUrl, error) ||
+        !JsonRequestReader::readRequiredString(remoteLogSettings, "token", remoteLogToken, error))
+    {
+        return false;
+    }
 
     uint8_t pressureAddress = 0;
     std::optional<PressureSensorSetting> parsedPressureSensor;
@@ -249,6 +259,8 @@ bool SaveSettingsCommand::parseSnapshot(JsonVariantConst json, SettingsSnapshot 
     }
 
     snapshot.globalSettings = parsedGlobal;
+    snapshot.remoteLogUrl = remoteLogUrl;
+    snapshot.remoteLogToken = remoteLogToken;
     snapshot.valveSettings = parsedValves;
     snapshot.pressureSensorSetting = parsedPressureSensor;
     snapshot.magistralWaterCounterSetting = parsedMagistralWaterCounter;

@@ -1,5 +1,6 @@
 #include "SoilSensor.hpp"
 #include <stdint.h>
+#include "Logging/Logger.hpp"
 
 SoilSensor::SoilSensor(
     ModbusMaster &modbusNode,
@@ -30,7 +31,7 @@ void SoilSensor::readData()
     uint8_t result = modbusNode_.readHoldingRegisters(0x0000, 2);
     if (result != modbusNode_.ku8MBSuccess)
     {
-        ESP_LOGE(
+        Logger::e(
             "SoilSensor",
             "Slave address %u returns mobdus result 0x%u",
             slaveAddress_,

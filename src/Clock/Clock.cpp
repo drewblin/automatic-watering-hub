@@ -1,8 +1,8 @@
 #include "Clock.hpp"
 
 #include <Arduino.h>
-#include <esp_log.h>
 #include <esp_sntp.h>
+#include "Logging/Logger.hpp"
 
 Clock *Clock::instance_ = nullptr;
 
@@ -25,7 +25,7 @@ void Clock::loop()
 
     if (!syncFailureLogged_.exchange(true))
     {
-        ESP_LOGE("Clock", "Clock has not been synchronized with NTP for more than 48 hours");
+        Logger::e("Clock", "Clock has not been synchronized with NTP for more than 48 hours");
     }
 }
 
@@ -50,6 +50,6 @@ void Clock::onTimeSynchronized(timeval *time)
     instance_->hasSynchronized_ = true;
     if (instance_->syncFailureLogged_.exchange(false))
     {
-        ESP_LOGI("Clock", "Clock synchronization with NTP has been restored");
+        Logger::i("Clock", "Clock synchronization with NTP has been restored");
     }
 }

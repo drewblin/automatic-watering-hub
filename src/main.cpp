@@ -6,6 +6,7 @@
 #include "Connectivity/WifiConnection.hpp"
 #include "Hub/WaterHubBuilder.hpp"
 #include "Hypervisor/Hypervisor.hpp"
+#include "Logging/Logger.hpp"
 #include "Setting/Settings.hpp"
 
 Clock systemClock;
@@ -29,13 +30,15 @@ void setup()
     settings.begin();
     SettingsSnapshot settingsSnapshot = settings.get();
 
+    Logger::begin(settingsSnapshot.remoteLogUrl, settingsSnapshot.remoteLogToken);
+
+    ApiServerBluetoothBuilder apiServerBluetoothBuilder(settingsSnapshot, settings);
+    apiServerBluetooth = apiServerBluetoothBuilder.build();
+
     wifiConnection = std::make_unique<WifiConnection>(settingsSnapshot.wifiSettings);
     wifiConnection->begin();
 
     systemClock.begin();
-
-    ApiServerBluetoothBuilder apiServerBluetoothBuilder(settingsSnapshot, settings);
-    apiServerBluetooth = apiServerBluetoothBuilder.build();
 
     ApiServerWifiBuilder apiServerWifiBuilder(
         modbusNode,
@@ -57,7 +60,7 @@ void setup()
     }
     else
     {
-        ESP_LOGE("Main", "Water hub is disabled because required settings are missing");
+        Logger::e("Main", "Water hub is disabled because required settings are missing");
     }
 
     apiServerBluetooth->begin();

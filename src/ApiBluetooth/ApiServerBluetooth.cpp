@@ -1,6 +1,7 @@
 #include "ApiServerBluetooth.hpp"
 
 #include <Arduino.h>
+#include "Logging/Logger.hpp"
 #include "NimBLEDevice.h"
 
 ApiServerBluetooth::ApiServerBluetooth(
@@ -47,11 +48,18 @@ void ApiServerBluetooth::begin()
         NIMBLE_PROPERTY::READ |
             NIMBLE_PROPERTY::READ_ENC |
             NIMBLE_PROPERTY::READ_AUTHEN);
+    logNotificationsCharacteristic_ = service->createCharacteristic(
+        LogNotificationsUuid,
+        NIMBLE_PROPERTY::READ |
+            NIMBLE_PROPERTY::READ_ENC |
+            NIMBLE_PROPERTY::READ_AUTHEN |
+            NIMBLE_PROPERTY::NOTIFY);
 
     wifiSettingsCharacteristic_->setCallbacks(this);
     saveWifiSettingsCharacteristic_->setCallbacks(this);
     wifiIpAddressCharacteristic_->setCallbacks(this);
     apiAccessTokenCharacteristic_->setCallbacks(this);
+    Logger::setBleCharacteristic(logNotificationsCharacteristic_);
 
     server->start();
     NimBLEAdvertising *advertising = NimBLEDevice::getAdvertising();

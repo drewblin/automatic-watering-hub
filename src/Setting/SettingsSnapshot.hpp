@@ -15,6 +15,8 @@ struct SettingsSnapshot
     GlobalSettings globalSettings;
     WifiSettings wifiSettings;
     std::string apiAccessToken;
+    std::string remoteLogUrl;
+    std::string remoteLogToken;
     std::vector<ValveSetting> valveSettings;
     std::optional<PressureSensorSetting> pressureSensorSetting;
     std::optional<WaterCounterSetting> magistralWaterCounterSetting;

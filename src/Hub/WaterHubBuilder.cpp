@@ -1,6 +1,7 @@
 #include <unordered_map>
 #include <memory>
 #include "WaterHubBuilder.hpp"
+#include "Logging/Logger.hpp"
 
 WaterHubBuilder::WaterHubBuilder(
     ModbusMaster &modbusNode,
@@ -57,7 +58,7 @@ WaterHub WaterHubBuilder::build(const SettingsSnapshot &settings)
         auto soilSensorIt = soilSensorMap.find(setting.getSoilSensorSlaveAddress());
         if (soilSensorIt == soilSensorMap.end())
         {
-            ESP_LOGE(
+            Logger::e(
                 "WaterHubBuilder",
                 "Valve pin %u references missing soil sensor address %u",
                 setting.getPin(),

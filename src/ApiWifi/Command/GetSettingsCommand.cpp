@@ -37,6 +37,10 @@ ApiCommandResult GetSettingsCommand::execute()
     jsonGlobalSettings["zoneWateringDurationSeconds"] = globalSettings.zoneWateringDurationSeconds;
     jsonGlobalSettings["zoneWateringRetryDelaySeconds"] = globalSettings.zoneWateringRetryDelaySeconds;
 
+    JsonObject remoteLogSettings = target["remoteLogSettings"].to<JsonObject>();
+    remoteLogSettings["url"] = settings_.remoteLogUrl;
+    remoteLogSettings["token"] = settings_.remoteLogToken;
+
     JsonArray valves = target["valveSettings"].to<JsonArray>();
     for (ValveSetting setting : settings_.valveSettings)
     {

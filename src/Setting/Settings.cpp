@@ -23,6 +23,8 @@ constexpr char ZONE_WATERING_RETRY_DELAY_KEY[] = "zoneRetry";
 constexpr char WIFI_SSID_KEY[] = "wifiSsid";
 constexpr char WIFI_PASSWORD_KEY[] = "wifiPassword";
 constexpr char API_ACCESS_TOKEN_KEY[] = "apiToken";
+constexpr char REMOTE_LOG_URL_KEY[] = "remoteLogUrl";
+constexpr char REMOTE_LOG_TOKEN_KEY[] = "remoteLogToken";
 constexpr char VALVE_COUNT_KEY[] = "valveCount";
 constexpr char PRESSURE_SENSOR_ADDRESS_KEY[] = "pressureAddr";
 constexpr char MAGISTRAL_WATER_COUNTER_PIN_KEY[] = "mainWcPin";
@@ -88,6 +90,8 @@ void Settings::begin()
     snapshot_.wifiSettings.ssid = readString(preferences, storageAvailable, WIFI_SSID_KEY, "").c_str();
     snapshot_.wifiSettings.password = readString(preferences, storageAvailable, WIFI_PASSWORD_KEY, "").c_str();
     snapshot_.apiAccessToken = readString(preferences, storageAvailable, API_ACCESS_TOKEN_KEY, "").c_str();
+    snapshot_.remoteLogUrl = readString(preferences, storageAvailable, REMOTE_LOG_URL_KEY, "").c_str();
+    snapshot_.remoteLogToken = readString(preferences, storageAvailable, REMOTE_LOG_TOKEN_KEY, "").c_str();
 
     uint8_t valveCount = readCount(preferences, storageAvailable, VALVE_COUNT_KEY);
     snapshot_.valveSettings.clear();
@@ -194,7 +198,9 @@ bool Settings::save(const SettingsSnapshot &snapshot, String &error)
         preferences.putUInt(ZONE_WATERING_DURATION_KEY, snapshot.globalSettings.zoneWateringDurationSeconds) > 0 &&
         preferences.putUInt(ZONE_WATERING_RETRY_DELAY_KEY, snapshot.globalSettings.zoneWateringRetryDelaySeconds) > 0 &&
         putString(preferences, WIFI_SSID_KEY, snapshot.wifiSettings.ssid.c_str()) &&
-        putString(preferences, WIFI_PASSWORD_KEY, snapshot.wifiSettings.password.c_str());
+        putString(preferences, WIFI_PASSWORD_KEY, snapshot.wifiSettings.password.c_str()) &&
+        putString(preferences, REMOTE_LOG_URL_KEY, snapshot.remoteLogUrl.c_str()) &&
+        putString(preferences, REMOTE_LOG_TOKEN_KEY, snapshot.remoteLogToken.c_str());
 
     if (saved && snapshot.hasPressureSensorSetting())
     {

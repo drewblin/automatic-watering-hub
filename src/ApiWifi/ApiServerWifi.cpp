@@ -1,6 +1,7 @@
 #include "ApiServerWifi.hpp"
 
 #include <Arduino.h>
+#include "Logging/Logger.hpp"
 #include "TlsCertificate.hpp"
 #include "esp_https_server.h"
 
@@ -35,7 +36,7 @@ void ApiServerWifi::begin()
 
     if (httpd_ssl_start(&server_, &config) != ESP_OK)
     {
-        ESP_LOGE("ApiServerWifi", "Failed to start HTTPS server");
+        Logger::e("ApiServerWifi", "Failed to start HTTPS server");
         return;
     }
 

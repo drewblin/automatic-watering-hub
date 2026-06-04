@@ -1,5 +1,6 @@
 #include "PressureSensor.hpp"
 #include <stdint.h>
+#include "Logging/Logger.hpp"
 
 PressureSensor::PressureSensor(
     ModbusMaster &modbusNode,
@@ -30,7 +31,7 @@ void PressureSensor::readPressure()
     uint8_t result = modbusNode_.readHoldingRegisters(0x0002, 3);
     if (result != modbusNode_.ku8MBSuccess)
     {
-        ESP_LOGE(
+        Logger::e(
             "PressureSensor",
             "Slave address %u returns mobdus result 0x%u",
             slaveAddress_,

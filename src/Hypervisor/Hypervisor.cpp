@@ -1,6 +1,7 @@
 #include "Hypervisor.hpp"
 
 #include <Arduino.h>
+#include "Logging/Logger.hpp"
 
 Hypervisor::Hypervisor(WaterHub &waterHub) : waterHub_(waterHub)
 {
@@ -52,7 +53,7 @@ void Hypervisor::checkUnauthorizedWaterFlow()
             }
         }
 
-        ESP_LOGW(
+        Logger::w(
             "Hypervisor",
             "Unauthorized water flow detected: %.2f liters are not accounted for by leaf counters. Closing all valves",
             unaccountedWaterUsageLiters);
@@ -66,7 +67,7 @@ void Hypervisor::checkUnauthorizedWaterFlow()
     if (!unauthorizedFlowErrorLogged_ &&
         millis() - unauthorizedFlowDetectedTimeMs_ >= UNAUTHORIZED_FLOW_ERROR_DELAY_MS)
     {
-        ESP_LOGE(
+        Logger::e(
             "Hypervisor",
             "Unauthorized water flow persists after closing all valves: %.2f liters are not accounted for by leaf counters",
             unaccountedWaterUsageLiters);
@@ -112,7 +113,7 @@ void Hypervisor::checkOpenValvesWithoutWaterFlow()
     if (!openValveWithoutFlowErrorLogged_ &&
         millis() - openValveWithoutFlowDetectedTimeMs_ >= OPEN_VALVE_WITHOUT_FLOW_ERROR_DELAY_MS)
     {
-        ESP_LOGE(
+        Logger::e(
             "Hypervisor",
             "At least one valve has been open for more than 10 seconds, but the magistral water counter shows no flow");
 
