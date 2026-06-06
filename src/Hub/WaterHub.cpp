@@ -1,5 +1,10 @@
 #include "WaterHub.hpp"
 
+WaterHub::WaterHub(const GlobalSettings &globalSettings)
+    : globalSettings_(globalSettings)
+{
+}
+
 void WaterHub::setMagistralWaterCounter(std::unique_ptr<WaterCounter> counter)
 {
     magistralWaterCounter_ = std::move(counter);
@@ -30,6 +35,7 @@ void WaterHub::loop()
 {
     uint32_t currentTimeMs = millis();
 
+    updateSensorReadIntervals();
     readPressureSensor(currentTimeMs);
     readSoilSensors(currentTimeMs);
     readWaterCounters(currentTimeMs);
@@ -69,6 +75,47 @@ SoilSensor *WaterHub::getSoilSensorForValve(const Valve *valve) const
     }
 
     return it->second;
+}
+
+void WaterHub::updateSensorReadIntervals()
+{
+    const bool shouldUseWateringMode = hasOpenValve();
+    if (sensorReadIntervalsUseWateringMode_ == shouldUseWateringMode)
+    {
+        return;
+    }
+
+    sensorReadIntervalsUseWateringMode_ = shouldUseWateringMode;
+
+    const uint32_t waterCounterReadIntervalSeconds = shouldUseWateringMode
+                                                         ? globalSettings_.wateringWaterCounterReadIntervalSeconds
+                                                         : globalSettings_.idleWaterCounterReadIntervalSeconds;
+    const uint32_t pressureSensorReadIntervalSeconds = shouldUseWateringMode
+                                                           ? globalSettings_.wateringPressureSensorReadIntervalSeconds
+                                                           : globalSettings_.idlePressureSensorReadIntervalSeconds;
+    const uint32_t soilSensorReadIntervalSeconds = shouldUseWateringMode
+                                                       ? globalSettings_.wateringSoilSensorReadIntervalSeconds
+                                                       : globalSettings_.idleSoilSensorReadIntervalSeconds;
+
+    if (magistralWaterCounter_ != nullptr)
+    {
+        magistralWaterCounter_->setReadIntervalSeconds(waterCounterReadIntervalSeconds);
+    }
+
+    for (const auto &counter : leafWaterCounters_)
+    {
+        counter->setReadIntervalSeconds(waterCounterReadIntervalSeconds);
+    }
+
+    if (pressureSensor_ != nullptr)
+    {
+        pressureSensor_->setReadIntervalSeconds(pressureSensorReadIntervalSeconds);
+    }
+
+    for (const auto &sensor : soilSensors_)
+    {
+        sensor->setReadIntervalSeconds(soilSensorReadIntervalSeconds);
+    }
 }
 
 void WaterHub::readWaterCounters(uint32_t currentTimeMs)

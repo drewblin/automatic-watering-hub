@@ -13,7 +13,7 @@ WaterHubBuilder::WaterHubBuilder(
 WaterHub WaterHubBuilder::build(const SettingsSnapshot &settings)
 {
     GlobalSettings globalSettings = settings.globalSettings;
-    WaterHub waterHub;
+    WaterHub waterHub(globalSettings);
 
     auto magistralWaterCounterSetting = settings.magistralWaterCounterSetting.value();
     auto magistralWaterCounter = std::make_unique<WaterCounter>(

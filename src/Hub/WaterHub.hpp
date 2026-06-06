@@ -6,11 +6,14 @@
 #include "Sensor/WaterCounter.hpp"
 #include "Sensor/PressureSensor.hpp"
 #include "Sensor/SoilSensor.hpp"
+#include "Setting/GlobalSettings.hpp"
 #include "Valve/Valve.hpp"
 
 class WaterHub
 {
 public:
+    explicit WaterHub(const GlobalSettings &globalSettings);
+
     void setMagistralWaterCounter(std::unique_ptr<WaterCounter> counter);
     void setPressureSensor(std::unique_ptr<PressureSensor> sensor);
     void addLeafWaterCounter(std::unique_ptr<WaterCounter> counter);
@@ -38,6 +41,10 @@ private:
 
     std::unordered_map<const Valve *, SoilSensor *> valveToSoilSensorMap_;
 
+    GlobalSettings globalSettings_;
+    bool sensorReadIntervalsUseWateringMode_ = false;
+
+    void updateSensorReadIntervals();
     void readWaterCounters(uint32_t currentTimeMs);
     void readPressureSensor(uint32_t currentTimeMs);
     void readSoilSensors(uint32_t currentTimeMs);
