@@ -52,7 +52,7 @@ void setup()
     {
         waterHub = std::make_unique<WaterHub>(waterHubBuilder.build(settingsSnapshot));
         hypervisor = std::make_unique<Hypervisor>(settingsSnapshot, *waterHub);
-        automaticWatering = std::make_unique<AutomaticWatering>(*waterHub);
+        automaticWatering = std::make_unique<AutomaticWatering>(*waterHub, settingsSnapshot, systemClock);
 
         apiServerWifiBuilder.enableWaterHubRoutes(*apiServerWifi, *waterHub);
 

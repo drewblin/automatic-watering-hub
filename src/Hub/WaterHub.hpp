@@ -24,6 +24,7 @@ public:
     const std::vector<std::unique_ptr<WaterCounter>> &getLeafWaterCounters() const;
     const std::vector<std::unique_ptr<SoilSensor>> &getSoilSensors() const;
     const std::vector<std::unique_ptr<Valve>> &getValves() const;
+    SoilSensor *getSoilSensorForValve(const Valve *valve) const;
 
     bool hasOpenValve() const;
 
@@ -35,7 +36,7 @@ private:
     std::vector<std::unique_ptr<SoilSensor>> soilSensors_;
     std::vector<std::unique_ptr<Valve>> valves_;
 
-    std::unordered_map<Valve *, SoilSensor *> valveToSoilSensorMap_;
+    std::unordered_map<const Valve *, SoilSensor *> valveToSoilSensorMap_;
 
     void readWaterCounters(uint32_t currentTimeMs);
     void readPressureSensor(uint32_t currentTimeMs);

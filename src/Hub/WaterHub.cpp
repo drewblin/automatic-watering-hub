@@ -60,6 +60,17 @@ const std::vector<std::unique_ptr<Valve>> &WaterHub::getValves() const
     return valves_;
 }
 
+SoilSensor *WaterHub::getSoilSensorForValve(const Valve *valve) const
+{
+    auto it = valveToSoilSensorMap_.find(valve);
+    if (it == valveToSoilSensorMap_.end())
+    {
+        return nullptr;
+    }
+
+    return it->second;
+}
+
 void WaterHub::readWaterCounters(uint32_t currentTimeMs)
 {
     magistralWaterCounter_->readLitersIfDue(currentTimeMs);
