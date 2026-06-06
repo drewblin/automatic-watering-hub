@@ -207,5 +207,7 @@ AUTO_WATERING_HUB_OTA_PASSWORD='<api-access-token>' \
 * Енергоощадність
   * Додати фізичну кнопку для BLE config mode і після цього повністю вимикати
     BLE advertising поза config mode.
+  * Після появи BLE config button повернутися до `esp_light_sleep_start()` для
+    idle-режиму контролера. Деталі: `docs/energy-saving-recommendations.md`.
 * Документація для розробника додатку та сервера
 * Документація поточної логіки

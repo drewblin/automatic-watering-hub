@@ -78,12 +78,12 @@ void loop()
     apiServerBluetooth->loop();
     otaUpdateService->loop();
 
-    if (waterHub == nullptr)
+    if (waterHub != nullptr)
     {
-        return;
+        waterHub->loop();
+        automaticWatering->loop();
+        hypervisor->loop();
     }
 
-    waterHub->loop();
-    automaticWatering->loop();
-    hypervisor->loop();
+    delay(50);
 }
