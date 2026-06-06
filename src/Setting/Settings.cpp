@@ -27,6 +27,7 @@ constexpr char REMOTE_LOG_URL_KEY[] = "remoteLogUrl";
 constexpr char REMOTE_LOG_TOKEN_KEY[] = "remoteLogToken";
 constexpr char VALVE_COUNT_KEY[] = "valveCount";
 constexpr char PRESSURE_SENSOR_ADDRESS_KEY[] = "pressureAddr";
+constexpr char PRESSURE_SENSOR_NAME_KEY[] = "pressureName";
 constexpr char MAGISTRAL_WATER_COUNTER_PIN_KEY[] = "mainWcPin";
 constexpr char MAGISTRAL_WATER_COUNTER_NAME_KEY[] = "mainWcName";
 constexpr char MAGISTRAL_WATER_COUNTER_LITERS_PER_TICK_KEY[] = "mainWcLpt";
@@ -109,7 +110,9 @@ void Settings::begin()
     snapshot_.pressureSensorSetting.reset();
     if (hasPressureSensorSetting)
     {
-        snapshot_.pressureSensorSetting.emplace(preferences.getUChar(PRESSURE_SENSOR_ADDRESS_KEY));
+        snapshot_.pressureSensorSetting.emplace(
+            preferences.getUChar(PRESSURE_SENSOR_ADDRESS_KEY),
+            readString(preferences, storageAvailable, PRESSURE_SENSOR_NAME_KEY, "Pressure sensor").c_str());
     }
 
     bool hasMagistralWaterCounterPin = hasRequiredKey(preferences, storageAvailable, MAGISTRAL_WATER_COUNTER_PIN_KEY);
@@ -204,11 +207,23 @@ bool Settings::save(const SettingsSnapshot &snapshot, String &error)
 
     if (saved && snapshot.hasPressureSensorSetting())
     {
-        saved = preferences.putUChar(PRESSURE_SENSOR_ADDRESS_KEY, snapshot.pressureSensorSetting->getSlaveAddress()) > 0;
+        saved =
+            preferences.putUChar(PRESSURE_SENSOR_ADDRESS_KEY, snapshot.pressureSensorSetting->getSlaveAddress()) > 0 &&
+            putString(preferences, PRESSURE_SENSOR_NAME_KEY, snapshot.pressureSensorSetting->getName().c_str());
     }
-    else if (saved && preferences.isKey(PRESSURE_SENSOR_ADDRESS_KEY))
+    else if (saved)
     {
-        saved = preferences.remove(PRESSURE_SENSOR_ADDRESS_KEY);
+        const char *pressureSensorKeys[] = {
+            PRESSURE_SENSOR_ADDRESS_KEY,
+            PRESSURE_SENSOR_NAME_KEY};
+        for (const char *key : pressureSensorKeys)
+        {
+            if (preferences.isKey(key) && !preferences.remove(key))
+            {
+                saved = false;
+                break;
+            }
+        }
     }
 
     if (saved && snapshot.hasMagistralWaterCounterSetting())

@@ -3,6 +3,7 @@
 #include <cmath>
 #include <stdint.h>
 #include "ModbusMaster.h"
+#include "Setting/SoilSensorSetting.hpp"
 
 class SoilSensor
 {
@@ -10,7 +11,7 @@ public:
     SoilSensor(
         ModbusMaster &modbusNode,
         HardwareSerial &serialPort,
-        uint8_t slaveAddress,
+        const SoilSensorSetting &setting,
         uint32_t readIntervalSeconds);
     void readDataIfDue(uint32_t currentTimeMs);
     void readData();
@@ -22,7 +23,7 @@ public:
 private:
     ModbusMaster &modbusNode_;
     HardwareSerial &serialPort_;
-    uint8_t slaveAddress_;
+    SoilSensorSetting setting_;
     uint32_t readIntervalSeconds_;
     uint32_t lastReadTimeMs_ = 0;
     float lastReadHumidity_ = NAN;

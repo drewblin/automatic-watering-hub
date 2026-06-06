@@ -5,10 +5,10 @@
 PressureSensor::PressureSensor(
     ModbusMaster &modbusNode,
     HardwareSerial &serialPort,
-    uint8_t slaveAddress,
+    const PressureSensorSetting &setting,
     uint32_t readIntervalSeconds) : modbusNode_(modbusNode),
                                     serialPort_(serialPort),
-                                    slaveAddress_(slaveAddress),
+                                    setting_(setting),
                                     readIntervalSeconds_(readIntervalSeconds)
 {
 }
@@ -26,7 +26,7 @@ void PressureSensor::readPressureIfDue(uint32_t currentTimeMs)
 
 void PressureSensor::readPressure()
 {
-    modbusNode_.begin(slaveAddress_, serialPort_);
+    modbusNode_.begin(setting_.getSlaveAddress(), serialPort_);
 
     uint8_t result = modbusNode_.readHoldingRegisters(0x0002, 3);
     if (result != modbusNode_.ku8MBSuccess)
@@ -34,10 +34,11 @@ void PressureSensor::readPressure()
         Logger::e(
             "PressureSensor",
             "Slave address %u returns mobdus result 0x%u",
-            slaveAddress_,
+            setting_.getSlaveAddress(),
             result);
 
         lastReadPressure_ = NAN;
+        Logger::sendSensorReading(setting_.getSlaveAddress(), "pressure", setting_.getName().c_str(), lastReadPressure_);
         return;
     }
 
@@ -46,6 +47,7 @@ void PressureSensor::readPressure()
     int16_t pressureRaw = (int16_t)modbusNode_.getResponseBuffer(2);
 
     lastReadPressure_ = convertToBar(pressureRaw / powf(10, decimal), unit);
+    Logger::sendSensorReading(setting_.getSlaveAddress(), "pressure", setting_.getName().c_str(), lastReadPressure_);
 }
 
 void PressureSensor::setReadIntervalSeconds(uint32_t readIntervalSeconds)

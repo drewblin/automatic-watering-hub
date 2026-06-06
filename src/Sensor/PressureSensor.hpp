@@ -3,13 +3,14 @@
 #include <cmath>
 #include <stdint.h>
 #include "ModbusMaster.h"
+#include "Setting/PressureSensorSetting.hpp"
 
 class PressureSensor
 {
 public:
     PressureSensor(ModbusMaster &modbusNode,
                   HardwareSerial &serialPort,
-                  uint8_t slaveAddress,
+                  const PressureSensorSetting &setting,
                   uint32_t readIntervalSeconds);
     void readPressureIfDue(uint32_t currentTimeMs);
     void readPressure();
@@ -20,7 +21,7 @@ public:
 private:
     ModbusMaster &modbusNode_;
     HardwareSerial &serialPort_;
-    uint8_t slaveAddress_;
+    PressureSensorSetting setting_;
     uint32_t readIntervalSeconds_;
     uint32_t lastReadTimeMs_ = 0;
     float lastReadPressure_ = NAN;

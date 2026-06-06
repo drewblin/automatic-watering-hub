@@ -137,6 +137,7 @@ bool SaveSettingsCommand::parseSnapshot(JsonVariantConst json, SettingsSnapshot 
     }
 
     uint8_t pressureAddress = 0;
+    std::string pressureName = "Pressure sensor";
     std::optional<PressureSensorSetting> parsedPressureSensor;
     JsonVariantConst pressure = json["pressureSensor"];
     if (!pressure.isNull())
@@ -155,7 +156,17 @@ bool SaveSettingsCommand::parseSnapshot(JsonVariantConst json, SettingsSnapshot 
             error = "pressureSensor.slaveAddress must be between 1 and 247";
             return false;
         }
-        parsedPressureSensor.emplace(pressureAddress);
+        JsonVariantConst pressureNameValue = pressure["name"];
+        if (!pressureNameValue.isNull())
+        {
+            if (!pressureNameValue.is<const char *>())
+            {
+                error = "pressureSensor.name must be a string";
+                return false;
+            }
+            pressureName = pressureNameValue.as<const char *>();
+        }
+        parsedPressureSensor.emplace(pressureAddress, pressureName);
     }
 
     uint8_t magistralPin = 0;

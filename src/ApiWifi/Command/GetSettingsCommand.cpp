@@ -53,6 +53,7 @@ ApiCommandResult GetSettingsCommand::execute()
     if (settings_.hasPressureSensorSetting())
     {
         target["pressureSensor"]["slaveAddress"] = settings_.pressureSensorSetting->getSlaveAddress();
+        target["pressureSensor"]["name"] = settings_.pressureSensorSetting->getName();
     }
     else
     {

@@ -13,6 +13,7 @@
 
 std::atomic<NimBLECharacteristic *> Logger::bleCharacteristic_{nullptr};
 std::atomic<uint32_t> Logger::droppedRemoteLogCount_{0};
+std::atomic<uint32_t> Logger::droppedSensorReadingCount_{0};
 std::string Logger::remoteUrl_;
 std::string Logger::remoteAuthorizationToken_;
 void *Logger::queue_ = nullptr;
@@ -25,7 +26,7 @@ void Logger::begin(const std::string &url, const std::string &authorizationToken
         return;
     }
 
-    QueueHandle_t queue = xQueueCreate(QueueLength, sizeof(Record));
+    QueueHandle_t queue = xQueueCreate(QueueLength, sizeof(DeliveryItem));
     if (queue == nullptr)
     {
         ESP_LOGE("Logger", "Failed to allocate remote log queue");
@@ -97,6 +98,31 @@ uint32_t Logger::droppedRemoteLogCount()
     return droppedRemoteLogCount_.load();
 }
 
+uint32_t Logger::droppedSensorReadingCount()
+{
+    return droppedSensorReadingCount_.load();
+}
+
+void Logger::sendSensorReading(uint8_t sensorId, const char *sensorType, const char *name, float value)
+{
+    DeliveryItem item = {};
+    item.type = DeliveryType::SensorReading;
+    item.sensorReading.sensorId = sensorId;
+    item.sensorReading.uptimeMs = millis();
+    item.sensorReading.value = value;
+
+    const char *safeSensorType = sensorType == nullptr ? "" : sensorType;
+    const char *safeName = name == nullptr ? "" : name;
+    std::snprintf(item.sensorReading.sensorType, sizeof(item.sensorReading.sensorType), "%s", safeSensorType);
+    std::snprintf(item.sensorReading.name, sizeof(item.sensorReading.name), "%s", safeName);
+
+    QueueHandle_t queue = static_cast<QueueHandle_t>(queue_);
+    if (queue != nullptr && xQueueSend(queue, &item, 0) != pdTRUE)
+    {
+        droppedSensorReadingCount_.fetch_add(1);
+    }
+}
+
 void Logger::write(esp_log_level_t level, const char *tag, const char *format, va_list arguments)
 {
     const char *safeTag = tag == nullptr ? "" : tag;
@@ -106,15 +132,15 @@ void Logger::write(esp_log_level_t level, const char *tag, const char *format, v
     esp_log_writev(level, safeTag, safeFormat, localArguments);
     va_end(localArguments);
 
-    Record record{
-        .level = level,
-        .uptimeMs = millis(),
-    };
-    std::snprintf(record.tag, sizeof(record.tag), "%s", safeTag);
-    std::vsnprintf(record.message, sizeof(record.message), safeFormat, arguments);
+    DeliveryItem item = {};
+    item.type = DeliveryType::Log;
+    item.record.level = level;
+    item.record.uptimeMs = millis();
+    std::snprintf(item.record.tag, sizeof(item.record.tag), "%s", safeTag);
+    std::vsnprintf(item.record.message, sizeof(item.record.message), safeFormat, arguments);
 
     QueueHandle_t queue = static_cast<QueueHandle_t>(queue_);
-    if (queue != nullptr && xQueueSend(queue, &record, 0) != pdTRUE)
+    if (queue != nullptr && xQueueSend(queue, &item, 0) != pdTRUE)
     {
         droppedRemoteLogCount_.fetch_add(1);
     }
@@ -122,23 +148,32 @@ void Logger::write(esp_log_level_t level, const char *tag, const char *format, v
 
 void Logger::worker(void *)
 {
-    Record record;
+    DeliveryItem item;
     while (true)
     {
         QueueHandle_t queue = static_cast<QueueHandle_t>(queue_);
-        if (queue != nullptr && xQueueReceive(queue, &record, portMAX_DELAY) == pdTRUE)
+        if (queue != nullptr && xQueueReceive(queue, &item, portMAX_DELAY) == pdTRUE)
         {
-            deliver(record);
+            deliver(item);
         }
     }
 }
 
-void Logger::deliver(const Record &record)
+void Logger::deliver(const DeliveryItem &item)
 {
     char payload[PayloadCapacity];
-    formatPayload(record, payload, sizeof(payload));
-    sendBleNotification(payload);
-    sendHttpsNotification(payload);
+
+    if (item.type == DeliveryType::Log)
+    {
+        formatPayload(item.record, payload, sizeof(payload));
+        sendBleNotification(payload);
+        sendHttpsNotification(payload, LogPath);
+    }
+    else
+    {
+        formatPayload(item.sensorReading, payload, sizeof(payload));
+        sendHttpsNotification(payload, MetricsPath);
+    }
 }
 
 void Logger::sendBleNotification(const char *payload)
@@ -157,7 +192,7 @@ void Logger::sendBleNotification(const char *payload)
     }
 }
 
-void Logger::sendHttpsNotification(char *payload)
+void Logger::sendHttpsNotification(char *payload, const char *path)
 {
     if (remoteUrl_.empty())
     {
@@ -177,7 +212,8 @@ void Logger::sendHttpsNotification(char *payload)
     HTTPClient http;
     http.setConnectTimeout(1500);
     http.setTimeout(1500);
-    if (!http.begin(client, remoteUrl_.c_str()))
+    std::string targetUrl = buildRemoteUrl(path);
+    if (!http.begin(client, targetUrl.c_str()))
     {
         ESP_LOGW("Logger", "Failed to initialize HTTPS log notification request");
         return;
@@ -202,6 +238,40 @@ void Logger::formatPayload(const Record &record, char *payload, std::size_t capa
     document["message"] = record.message;
 
     serializeJson(document, payload, capacity);
+}
+
+void Logger::formatPayload(const SensorReading &reading, char *payload, std::size_t capacity)
+{
+    JsonDocument document;
+    document["sensorId"] = reading.sensorId;
+    document["sensorType"] = reading.sensorType;
+    document["name"] = reading.name;
+    document["value"] = reading.value;
+    document["uptimeMs"] = reading.uptimeMs;
+
+    serializeJson(document, payload, capacity);
+}
+
+std::string Logger::buildRemoteUrl(const char *path)
+{
+    const char *safePath = path == nullptr ? "" : path;
+    if (remoteUrl_.empty() || safePath[0] == '\0')
+    {
+        return remoteUrl_;
+    }
+
+    bool baseEndsWithSlash = remoteUrl_.back() == '/';
+    bool pathStartsWithSlash = safePath[0] == '/';
+
+    if (baseEndsWithSlash && pathStartsWithSlash)
+    {
+        return remoteUrl_ + (safePath + 1);
+    }
+    if (!baseEndsWithSlash && !pathStartsWithSlash)
+    {
+        return remoteUrl_ + "/" + safePath;
+    }
+    return remoteUrl_ + safePath;
 }
 
 const char *Logger::levelName(esp_log_level_t level)

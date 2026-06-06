@@ -5,10 +5,10 @@
 SoilSensor::SoilSensor(
     ModbusMaster &modbusNode,
     HardwareSerial &serialPort,
-    uint8_t slaveAddress,
+    const SoilSensorSetting &setting,
     uint32_t readIntervalSeconds) : modbusNode_(modbusNode),
                                     serialPort_(serialPort),
-                                    slaveAddress_(slaveAddress),
+                                    setting_(setting),
                                     readIntervalSeconds_(readIntervalSeconds)
 {
 }
@@ -26,7 +26,7 @@ void SoilSensor::readDataIfDue(uint32_t currentTimeMs)
 
 void SoilSensor::readData()
 {
-    modbusNode_.begin(slaveAddress_, serialPort_);
+    modbusNode_.begin(setting_.getSlaveAddress(), serialPort_);
 
     uint8_t result = modbusNode_.readHoldingRegisters(0x0000, 2);
     if (result != modbusNode_.ku8MBSuccess)
@@ -34,11 +34,13 @@ void SoilSensor::readData()
         Logger::e(
             "SoilSensor",
             "Slave address %u returns mobdus result 0x%u",
-            slaveAddress_,
+            setting_.getSlaveAddress(),
             result);
 
         lastReadHumidity_ = NAN;
         lastReadTemperature_ = NAN;
+        Logger::sendSensorReading(setting_.getSlaveAddress(), "soil_temperature", setting_.getName().c_str(), lastReadTemperature_);
+        Logger::sendSensorReading(setting_.getSlaveAddress(), "soil_humidity", setting_.getName().c_str(), lastReadHumidity_);
 
         return;
     }
@@ -48,6 +50,8 @@ void SoilSensor::readData()
 
     lastReadTemperature_ = temperatureRaw / 10.0f;
     lastReadHumidity_ = humidityRaw / 10.0f;
+    Logger::sendSensorReading(setting_.getSlaveAddress(), "soil_temperature", setting_.getName().c_str(), lastReadTemperature_);
+    Logger::sendSensorReading(setting_.getSlaveAddress(), "soil_humidity", setting_.getName().c_str(), lastReadHumidity_);
 }
 
 void SoilSensor::setReadIntervalSeconds(uint32_t readIntervalSeconds)

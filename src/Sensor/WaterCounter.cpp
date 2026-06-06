@@ -1,11 +1,10 @@
 #include "WaterCounter.hpp"
+#include "Logging/Logger.hpp"
 
-WaterCounter::WaterCounter(uint8_t pin, float litersPerTick, uint32_t readIntervalSeconds)
+WaterCounter::WaterCounter(const WaterCounterSetting &setting, uint32_t readIntervalSeconds)
+    : setting_(setting), readIntervalSeconds_(readIntervalSeconds)
 {
-    litersPerTick_ = litersPerTick;
-    readIntervalSeconds_ = readIntervalSeconds;
-
-    pinMode(pin, INPUT);
+    pinMode(setting_.getPin(), INPUT);
 
     pcnt_unit_config_t unitConfig = {
         .low_limit = INT16_MIN,
@@ -24,7 +23,7 @@ WaterCounter::WaterCounter(uint8_t pin, float litersPerTick, uint32_t readInterv
     ESP_ERROR_CHECK(pcnt_unit_set_glitch_filter(pcntUnit_, &filterConfig));
 
     pcnt_chan_config_t pcntChannelConfig = {
-        .edge_gpio_num = pin,
+        .edge_gpio_num = setting_.getPin(),
         .level_gpio_num = -1,
     };
 
@@ -73,7 +72,8 @@ void WaterCounter::readLiters()
     }
 
     lastTickCount_ = tickCount;
-    totalLiters_ += delta * litersPerTick_;
+    totalLiters_ += delta * setting_.getLitersPerTick();
+    Logger::sendSensorReading(setting_.getPin(), "water_counter", setting_.getName().c_str(), totalLiters_);
 }
 
 void WaterCounter::setReadIntervalSeconds(uint32_t readIntervalSeconds)
