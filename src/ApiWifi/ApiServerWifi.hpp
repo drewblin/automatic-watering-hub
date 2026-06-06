@@ -4,6 +4,7 @@
 #include <string>
 #include "ArduinoJson.h"
 #include "Command/ChangeDeviceAddressCommand.hpp"
+#include "Command/GetSensorMetricsCommand.hpp"
 #include "Command/GetSettingsCommand.hpp"
 #include "Command/OpenValveForTimeCommand.hpp"
 #include "Command/SaveSettingsCommand.hpp"
@@ -20,7 +21,8 @@ public:
         uint16_t port = 443);
 
     void registerWaterHubRoutes(
-        std::unique_ptr<OpenValveForTimeCommand> openValveForTimeCommand
+        std::unique_ptr<OpenValveForTimeCommand> openValveForTimeCommand,
+        std::unique_ptr<GetSensorMetricsCommand> getSensorMetricsCommand
     );
 
     void begin();
@@ -64,6 +66,7 @@ private:
 
     static esp_err_t handleChangeDeviceAddress(httpd_req_t *request);
     static esp_err_t handleOpenValveForTime(httpd_req_t *request);
+    static esp_err_t handleGetSensorMetrics(httpd_req_t *request);
     static esp_err_t handleGetSettings(httpd_req_t *request);
     static esp_err_t handleSaveSettings(httpd_req_t *request);
 
@@ -75,6 +78,7 @@ private:
     GetSettingsCommand getSettingsCommand_;
     SaveSettingsCommand saveSettingsCommand_;
     std::unique_ptr<OpenValveForTimeCommand> openValveForTimeCommand_;
+    std::unique_ptr<GetSensorMetricsCommand> getSensorMetricsCommand_;
     std::string apiAccessToken_;
     httpd_handle_t server_ = nullptr;
     uint16_t port_;

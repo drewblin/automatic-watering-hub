@@ -20,9 +20,11 @@ ApiServerWifi::ApiServerWifi(
 }
 
 void ApiServerWifi::registerWaterHubRoutes(
-    std::unique_ptr<OpenValveForTimeCommand> openValveForTimeCommand)
+    std::unique_ptr<OpenValveForTimeCommand> openValveForTimeCommand,
+    std::unique_ptr<GetSensorMetricsCommand> getSensorMetricsCommand)
 {
     openValveForTimeCommand_ = std::move(openValveForTimeCommand);
+    getSensorMetricsCommand_ = std::move(getSensorMetricsCommand);
 }
 
 void ApiServerWifi::begin()
@@ -69,6 +71,16 @@ void ApiServerWifi::begin()
             .handler = handleOpenValveForTime,
             .user_ctx = this};
         httpd_register_uri_handler(server_, &openValveForTime);
+    }
+
+    if (getSensorMetricsCommand_ != nullptr)
+    {
+        httpd_uri_t getSensorMetrics = {
+            .uri = "/api/sensors/metrics",
+            .method = HTTP_GET,
+            .handler = handleGetSensorMetrics,
+            .user_ctx = this};
+        httpd_register_uri_handler(server_, &getSensorMetrics);
     }
 }
 
@@ -136,6 +148,21 @@ esp_err_t ApiServerWifi::handleOpenValveForTime(httpd_req_t *request)
             return server->sendCommandResult(*request, result);
         }
         return server->sendCommandResult(*request, server->execute(*server->openValveForTimeCommand_, *request));
+    });
+}
+
+esp_err_t ApiServerWifi::handleGetSensorMetrics(httpd_req_t *request)
+{
+    ApiServerWifi *server = static_cast<ApiServerWifi *>(request->user_ctx);
+    return server->authorizeAndHandle(*request, [&]()
+    {
+        if (server->getSensorMetricsCommand_ == nullptr)
+        {
+            ApiCommandResult result(503, false);
+            result.error = "Water hub is not available";
+            return server->sendCommandResult(*request, result);
+        }
+        return server->sendCommandResult(*request, server->getSensorMetricsCommand_->execute());
     });
 }
 

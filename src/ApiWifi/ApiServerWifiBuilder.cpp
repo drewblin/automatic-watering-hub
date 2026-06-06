@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "Command/ChangeDeviceAddressCommand.hpp"
+#include "Command/GetSensorMetricsCommand.hpp"
 #include "Command/GetSettingsCommand.hpp"
 #include "Command/SaveSettingsCommand.hpp"
 #include "Command/OpenValveForTimeCommand.hpp"
@@ -35,5 +36,6 @@ void ApiServerWifiBuilder::enableWaterHubRoutes(
     WaterHub &waterHub)
 {
     apiServerWifi.registerWaterHubRoutes(
-        std::make_unique<OpenValveForTimeCommand>(waterHub, settingsSnapShot_));
+        std::make_unique<OpenValveForTimeCommand>(waterHub, settingsSnapShot_),
+        std::make_unique<GetSensorMetricsCommand>(waterHub, settingsSnapShot_));
 }
