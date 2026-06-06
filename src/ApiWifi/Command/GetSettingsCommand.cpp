@@ -23,16 +23,22 @@ ApiCommandResult GetSettingsCommand::execute()
     jsonGlobalSettings["startWateringBelowHumidityPercent"] = globalSettings.startWateringBelowHumidityPercent;
     jsonGlobalSettings["stopWateringAboveHumidityPercent"] = globalSettings.stopWateringAboveHumidityPercent;
     jsonGlobalSettings["wateringStartMode"] = globalSettings.wateringStartMode.toString();
-    std::optional<TimeOfDay> scheduledStartTime = globalSettings.wateringStartMode.getScheduledStartTime();
-    if (scheduledStartTime.has_value())
+    std::optional<TimeOfDay> wateringWindowStartTime = globalSettings.wateringStartMode.getWateringWindowStartTime();
+    std::optional<TimeOfDay> wateringWindowEndTime = globalSettings.wateringStartMode.getWateringWindowEndTime();
+    if (wateringWindowStartTime.has_value() && wateringWindowEndTime.has_value())
     {
-        JsonObject jsonTime = jsonGlobalSettings["scheduledWateringStartTime"].to<JsonObject>();
-        jsonTime["hour"] = scheduledStartTime->hour;
-        jsonTime["minute"] = scheduledStartTime->minute;
+        JsonObject jsonStartTime = jsonGlobalSettings["wateringWindowStartTime"].to<JsonObject>();
+        jsonStartTime["hour"] = wateringWindowStartTime->hour;
+        jsonStartTime["minute"] = wateringWindowStartTime->minute;
+
+        JsonObject jsonEndTime = jsonGlobalSettings["wateringWindowEndTime"].to<JsonObject>();
+        jsonEndTime["hour"] = wateringWindowEndTime->hour;
+        jsonEndTime["minute"] = wateringWindowEndTime->minute;
     }
     else
     {
-        jsonGlobalSettings["scheduledWateringStartTime"] = nullptr;
+        jsonGlobalSettings["wateringWindowStartTime"] = nullptr;
+        jsonGlobalSettings["wateringWindowEndTime"] = nullptr;
     }
     jsonGlobalSettings["zoneWateringDurationSeconds"] = globalSettings.zoneWateringDurationSeconds;
     jsonGlobalSettings["zoneWateringRetryDelaySeconds"] = globalSettings.zoneWateringRetryDelaySeconds;

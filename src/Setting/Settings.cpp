@@ -16,8 +16,10 @@ constexpr char MAXIMUM_MANUAL_VALVE_OPEN_TIME_KEY[] = "maxManual";
 constexpr char START_WATERING_BELOW_HUMIDITY_KEY[] = "humidStart";
 constexpr char STOP_WATERING_ABOVE_HUMIDITY_KEY[] = "humidStop";
 constexpr char WATERING_START_MODE_KEY[] = "waterMode";
-constexpr char SCHEDULED_WATERING_START_HOUR_KEY[] = "startHour";
-constexpr char SCHEDULED_WATERING_START_MINUTE_KEY[] = "startMinute";
+constexpr char WATERING_WINDOW_START_HOUR_KEY[] = "startHour";
+constexpr char WATERING_WINDOW_START_MINUTE_KEY[] = "startMinute";
+constexpr char WATERING_WINDOW_END_HOUR_KEY[] = "endHour";
+constexpr char WATERING_WINDOW_END_MINUTE_KEY[] = "endMinute";
 constexpr char ZONE_WATERING_DURATION_KEY[] = "zoneDuration";
 constexpr char ZONE_WATERING_RETRY_DELAY_KEY[] = "zoneRetry";
 constexpr char WIFI_SSID_KEY[] = "wifiSsid";
@@ -67,9 +69,12 @@ void Settings::begin()
     snapshot_.globalSettings.startWateringBelowHumidityPercent = readUChar(preferences, storageAvailable, START_WATERING_BELOW_HUMIDITY_KEY, 20);
     snapshot_.globalSettings.stopWateringAboveHumidityPercent = readUChar(preferences, storageAvailable, STOP_WATERING_ABOVE_HUMIDITY_KEY, 80);
 
-    TimeOfDay scheduledWateringStartTime{
-        readUChar(preferences, storageAvailable, SCHEDULED_WATERING_START_HOUR_KEY, 23),
-        readUChar(preferences, storageAvailable, SCHEDULED_WATERING_START_MINUTE_KEY, 10)};
+    TimeOfDay wateringWindowStartTime{
+        readUChar(preferences, storageAvailable, WATERING_WINDOW_START_HOUR_KEY, 23),
+        readUChar(preferences, storageAvailable, WATERING_WINDOW_START_MINUTE_KEY, 10)};
+    TimeOfDay wateringWindowEndTime{
+        readUChar(preferences, storageAvailable, WATERING_WINDOW_END_HOUR_KEY, 23),
+        readUChar(preferences, storageAvailable, WATERING_WINDOW_END_MINUTE_KEY, 59)};
     String wateringStartModeValue = readString(
         preferences,
         storageAvailable,
@@ -77,7 +82,8 @@ void Settings::begin()
         WateringStartMode::IMMEDIATELY);
     std::optional<WateringStartMode> wateringStartMode = WateringStartMode::tryFrom(
         wateringStartModeValue.c_str(),
-        scheduledWateringStartTime);
+        wateringWindowStartTime,
+        wateringWindowEndTime);
     if (!wateringStartMode.has_value())
     {
         ESP_LOGE("Settings", "Invalid setting %s. Using hardcoded default", WATERING_START_MODE_KEY);
@@ -183,8 +189,10 @@ bool Settings::save(const SettingsSnapshot &snapshot, String &error)
         return false;
     }
 
-    std::optional<TimeOfDay> scheduledStartTime = snapshot.globalSettings.wateringStartMode.getScheduledStartTime();
-    TimeOfDay storedStartTime = scheduledStartTime.value_or(TimeOfDay{0, 0});
+    std::optional<TimeOfDay> wateringWindowStartTime = snapshot.globalSettings.wateringStartMode.getWateringWindowStartTime();
+    std::optional<TimeOfDay> wateringWindowEndTime = snapshot.globalSettings.wateringStartMode.getWateringWindowEndTime();
+    TimeOfDay storedStartTime = wateringWindowStartTime.value_or(TimeOfDay{0, 0});
+    TimeOfDay storedEndTime = wateringWindowEndTime.value_or(TimeOfDay{0, 0});
     bool saved =
         preferences.putUInt(IDLE_WATER_COUNTER_READ_INTERVAL_KEY, snapshot.globalSettings.idleWaterCounterReadIntervalSeconds) > 0 &&
         preferences.putUInt(WATERING_WATER_COUNTER_READ_INTERVAL_KEY, snapshot.globalSettings.wateringWaterCounterReadIntervalSeconds) > 0 &&
@@ -196,8 +204,10 @@ bool Settings::save(const SettingsSnapshot &snapshot, String &error)
         preferences.putUChar(START_WATERING_BELOW_HUMIDITY_KEY, snapshot.globalSettings.startWateringBelowHumidityPercent) > 0 &&
         preferences.putUChar(STOP_WATERING_ABOVE_HUMIDITY_KEY, snapshot.globalSettings.stopWateringAboveHumidityPercent) > 0 &&
         preferences.putString(WATERING_START_MODE_KEY, snapshot.globalSettings.wateringStartMode.toString()) > 0 &&
-        preferences.putUChar(SCHEDULED_WATERING_START_HOUR_KEY, storedStartTime.hour) > 0 &&
-        preferences.putUChar(SCHEDULED_WATERING_START_MINUTE_KEY, storedStartTime.minute) > 0 &&
+        preferences.putUChar(WATERING_WINDOW_START_HOUR_KEY, storedStartTime.hour) > 0 &&
+        preferences.putUChar(WATERING_WINDOW_START_MINUTE_KEY, storedStartTime.minute) > 0 &&
+        preferences.putUChar(WATERING_WINDOW_END_HOUR_KEY, storedEndTime.hour) > 0 &&
+        preferences.putUChar(WATERING_WINDOW_END_MINUTE_KEY, storedEndTime.minute) > 0 &&
         preferences.putUInt(ZONE_WATERING_DURATION_KEY, snapshot.globalSettings.zoneWateringDurationSeconds) > 0 &&
         preferences.putUInt(ZONE_WATERING_RETRY_DELAY_KEY, snapshot.globalSettings.zoneWateringRetryDelaySeconds) > 0 &&
         putString(preferences, WIFI_SSID_KEY, snapshot.wifiSettings.ssid.c_str()) &&

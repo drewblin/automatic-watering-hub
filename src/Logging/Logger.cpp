@@ -7,6 +7,7 @@
 #include <WiFiClientSecure.h>
 #include <cstdio>
 #include <cstring>
+#include <cmath>
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
@@ -246,7 +247,14 @@ void Logger::formatPayload(const SensorReading &reading, char *payload, std::siz
     document["sensorId"] = reading.sensorId;
     document["sensorType"] = reading.sensorType;
     document["name"] = reading.name;
-    document["value"] = reading.value;
+    if (std::isnan(reading.value))
+    {
+        document["value"] = nullptr;
+    }
+    else
+    {
+        document["value"] = reading.value;
+    }
     document["uptimeMs"] = reading.uptimeMs;
 
     serializeJson(document, payload, capacity);

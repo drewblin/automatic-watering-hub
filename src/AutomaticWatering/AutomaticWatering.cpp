@@ -39,6 +39,12 @@ void AutomaticWatering::closeActiveValveIfNeeded(uint32_t currentTimeMs)
         return;
     }
 
+    if (!canStartWateringNow())
+    {
+        closeActiveValve(currentTimeMs, "watering window elapsed");
+        return;
+    }
+
     const uint32_t elapsedSeconds = (currentTimeMs - activeValveOpenedTimeMs_) / 1000;
     if (elapsedSeconds >= settings_.globalSettings.zoneWateringDurationSeconds)
     {
@@ -105,10 +111,12 @@ bool AutomaticWatering::canStartWateringNow() const
         return true;
     }
 
-    const std::optional<TimeOfDay> scheduledStartTime =
-        settings_.globalSettings.wateringStartMode.getScheduledStartTime();
+    const std::optional<TimeOfDay> windowStartTime =
+        settings_.globalSettings.wateringStartMode.getWateringWindowStartTime();
+    const std::optional<TimeOfDay> windowEndTime =
+        settings_.globalSettings.wateringStartMode.getWateringWindowEndTime();
     const std::optional<std::time_t> now = clock_.now();
-    if (!scheduledStartTime.has_value() || !now.has_value())
+    if (!windowStartTime.has_value() || !windowEndTime.has_value() || !now.has_value())
     {
         return false;
     }
@@ -120,8 +128,14 @@ bool AutomaticWatering::canStartWateringNow() const
     }
 
     const int currentMinutes = localTime.tm_hour * 60 + localTime.tm_min;
-    const int scheduledMinutes = scheduledStartTime->hour * 60 + scheduledStartTime->minute;
-    return currentMinutes >= scheduledMinutes;
+    const int startMinutes = windowStartTime->hour * 60 + windowStartTime->minute;
+    const int endMinutes = windowEndTime->hour * 60 + windowEndTime->minute;
+    if (startMinutes <= endMinutes)
+    {
+        return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+    }
+
+    return currentMinutes >= startMinutes || currentMinutes <= endMinutes;
 }
 
 bool AutomaticWatering::hasDelayElapsed(size_t valveIndex, uint32_t currentTimeMs) const

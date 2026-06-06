@@ -90,6 +90,13 @@ void GetSensorMetricsCommand::addSensorMetric(
     sensorMetric["sensorId"] = sensorId;
     sensorMetric["sensorType"] = sensorType;
     sensorMetric["name"] = name;
-    sensorMetric["value"] = value;
+    if (std::isnan(value))
+    {
+        sensorMetric["value"] = nullptr;
+    }
+    else
+    {
+        sensorMetric["value"] = value;
+    }
     sensorMetric["uptimeMs"] = uptimeMs;
 }

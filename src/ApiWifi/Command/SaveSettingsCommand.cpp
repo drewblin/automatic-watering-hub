@@ -102,28 +102,34 @@ bool SaveSettingsCommand::parseSnapshot(JsonVariantConst json, SettingsSnapshot 
         return false;
     }
     TimeOfDay startTime{0, 0};
-    if (mode == WateringStartMode::AT_SCHEDULED_TIME)
+    TimeOfDay endTime{0, 0};
+    if (mode == WateringStartMode::WITHIN_WATERING_WINDOW)
     {
-        JsonObjectConst time;
-        if (!JsonRequestReader::readRequiredObject(global, "scheduledWateringStartTime", time, error) ||
-            !JsonRequestReader::readRequiredUint8(time, "hour", startTime.hour, error) ||
-            !JsonRequestReader::readRequiredUint8(time, "minute", startTime.minute, error))
+        JsonObjectConst start;
+        JsonObjectConst end;
+        if (!JsonRequestReader::readRequiredObject(global, "wateringWindowStartTime", start, error) ||
+            !JsonRequestReader::readRequiredObject(global, "wateringWindowEndTime", end, error) ||
+            !JsonRequestReader::readRequiredUint8(start, "hour", startTime.hour, error) ||
+            !JsonRequestReader::readRequiredUint8(start, "minute", startTime.minute, error) ||
+            !JsonRequestReader::readRequiredUint8(end, "hour", endTime.hour, error) ||
+            !JsonRequestReader::readRequiredUint8(end, "minute", endTime.minute, error))
         {
             return false;
         }
-        if (startTime.hour > 23 || startTime.minute > 59)
+        if (startTime.hour > 23 || startTime.minute > 59 ||
+            endTime.hour > 23 || endTime.minute > 59)
         {
-            error = "scheduledWateringStartTime must be a valid time of day";
+            error = "Watering window start and end times must be valid times of day";
             return false;
         }
     }
-    std::optional<WateringStartMode> parsedMode = WateringStartMode::tryFrom(mode.c_str(), startTime);
+    std::optional<WateringStartMode> parsedMode = WateringStartMode::tryFrom(mode.c_str(), startTime, endTime);
     if (!parsedMode.has_value())
     {
         error = String("wateringStartMode must be ") +
                 WateringStartMode::IMMEDIATELY +
                 " or " +
-                WateringStartMode::AT_SCHEDULED_TIME;
+                WateringStartMode::WITHIN_WATERING_WINDOW;
         return false;
     }
     parsedGlobal.wateringStartMode = parsedMode.value();

@@ -258,7 +258,8 @@ Authorization: Bearer <apiAccessToken>
         "startWateringBelowHumidityPercent": 20,
         "stopWateringAboveHumidityPercent": 80,
         "wateringStartMode": "immediately",
-        "scheduledWateringStartTime": null,
+        "wateringWindowStartTime": null,
+        "wateringWindowEndTime": null,
         "zoneWateringDurationSeconds": 300,
         "zoneWateringRetryDelaySeconds": 900
       },
@@ -333,10 +334,14 @@ Content-Type: application/json
     "maximumManualValveOpenTimeSeconds": 3600,
     "startWateringBelowHumidityPercent": 20,
     "stopWateringAboveHumidityPercent": 80,
-    "wateringStartMode": "atScheduledTime",
-    "scheduledWateringStartTime": {
+    "wateringStartMode": "withinWateringWindow",
+    "wateringWindowStartTime": {
       "hour": 23,
       "minute": 10
+    },
+    "wateringWindowEndTime": {
+      "hour": 6,
+      "minute": 30
     },
     "zoneWateringDurationSeconds": 300,
     "zoneWateringRetryDelaySeconds": 900
@@ -397,10 +402,15 @@ Content-Type: application/json
 - інтервали часу мають бути від `1` до `2147483` seconds;
 - пороги вологості мають бути `0..100`, і
   `startWateringBelowHumidityPercent < stopWateringAboveHumidityPercent`;
-- `wateringStartMode` має бути `immediately` або `atScheduledTime`;
-- коли `wateringStartMode` дорівнює `atScheduledTime`,
-  `scheduledWateringStartTime.hour` має бути `0..23`, а `minute` має бути
-  `0..59`;
+- `wateringStartMode` має бути `immediately` або `withinWateringWindow`;
+- коли `wateringStartMode` дорівнює `withinWateringWindow`,
+  `wateringWindowStartTime.hour`, `wateringWindowEndTime.hour` мають бути
+  `0..23`, а `minute` в обох об'єктах має бути `0..59`;
+- якщо `wateringWindowEndTime` менший за `wateringWindowStartTime`, вікно
+  поливу переходить через північ;
+- у режимі `withinWateringWindow` контролер запускає і продовжує автоматичний
+  полив тільки всередині вікна; коли вікно завершується, активний автоматичний
+  полив закривається;
 - `pressureSensor` може бути `null` або object;
 - `magistralWaterCounterSetting` може бути `null` або object;
 - Modbus slave addresses мають бути `1..247`;
@@ -418,9 +428,16 @@ outbound telemetry. Firmware додає до нього `/logs` і `/metrics`.
 Мобільний додаток не повинен використовувати цей token як session token користувача.
 
 Для `wateringStartMode: "immediately"` треба відправляти
-`"scheduledWateringStartTime": null` або не показувати це значення в UI.
-Поточний parser firmware вимагає `scheduledWateringStartTime` тільки коли mode
-дорівнює `atScheduledTime`.
+`"wateringWindowStartTime": null` і `"wateringWindowEndTime": null` або не
+показувати ці значення в UI. Поточний parser firmware вимагає обидва поля
+тільки коли mode дорівнює `withinWateringWindow`.
+
+Важливо для UI: автоматичний полив і water-hub routes запускаються тільки після
+повного налаштування базової системи. Треба задати `pressureSensor`,
+`magistralWaterCounterSetting`, мінімум один `soilSensorSettings` item і клапани,
+які посилаються на наявні soil sensors. Якщо ці налаштування неповні, контролер
+зберігає конфігурацію, але полив не стартує, а endpoints керування клапанами і
+сенсорними метриками можуть бути недоступні.
 
 ### GET /api/sensors/metrics
 
@@ -485,6 +502,9 @@ Authorization: Bearer <apiAccessToken>
 - `water_counter`;
 - `soil_temperature`;
 - `soil_humidity`.
+
+`value` може бути `null`, якщо останнє читання сенсора завершилося помилкою або
+значення ще недоступне.
 
 ### POST /api/valves/open-for-time
 
@@ -762,6 +782,9 @@ Authorization: Bearer <mobile-session-token>
 }
 ```
 
+`value` може бути `null`, якщо останній ingest для серії містив невдале читання
+сенсора.
+
 ### Отримання metric series для графіків
 
 Використовувати для графіків.
@@ -797,6 +820,9 @@ Authorization: Bearer <mobile-session-token>
 
 Підтримувані значення `bucket`: `raw`, `1m`, `5m`, `15m`, `1h`, `1d`.
 Підтримувані значення `aggregation`: `avg`, `min`, `max`, `sum`, `last`.
+
+Raw series може містити points із `"value": null`. Bucketed series і summary
+мають будуватися тільки по числових значеннях, без трактування `null` як `0`.
 
 Для осі X графіка треба використовувати `timestamp` із відповіді сервера. Не
 використовуйте controller `uptimeMs` як absolute timestamp.

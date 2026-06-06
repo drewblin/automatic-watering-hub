@@ -128,7 +128,7 @@ Content-Type: application/json
 | `sensorId` | uint8 | так | Modbus slave address або GPIO pin |
 | `sensorType` | string | так | Тип сенсора |
 | `name` | string | так | Назва сенсора для відображення |
-| `value` | number | так | Значення виміру |
+| `value` | number або null | так | Значення виміру; `null`, якщо останнє читання сенсора завершилося помилкою або значення недоступне |
 | `uptimeMs` | uint32 | так | Час від старту контролера в мілісекундах |
 
 Поточні значення `sensorType`:
@@ -148,6 +148,7 @@ Content-Type: application/json
 
 - зберегти raw metric point із `receivedAt`;
 - зберегти `sensorId`, `sensorType`, `name`, `value`, `uptimeMs`;
+- для графіків і summary пропускати `null` values у числових агрегаціях;
 - для графіків використовувати `receivedAt` як absolute timestamp;
 - не покладатися на `uptimeMs` для timeline між reboot;
 - для `water_counter` зберігати cumulative value і за потреби рахувати delta/rate
@@ -390,6 +391,8 @@ Authorization: Bearer <mobile-session-token>
 ```
 
 `seriesKey` має мати формат `${sensorType}:${sensorId}`.
+`value` може бути `null`, якщо останній ingest для серії містив невдале читання
+сенсора.
 
 ### GET /api/mobile/devices/{deviceId}/metrics/series
 
@@ -460,6 +463,10 @@ Authorization: Bearer <mobile-session-token>
   "error": null
 }
 ```
+
+Raw series може містити points із `"value": null`. Для bucketed data сервер має
+рахувати `avg`, `min`, `max`, `sum`, `last` і `count` тільки по числових
+значеннях.
 
 ### GET /api/mobile/devices/{deviceId}/metrics/summary
 
