@@ -6,7 +6,7 @@ class WifiConnection
 {
 public:
     explicit WifiConnection(WifiSettings settings);
-    void begin();
+    bool begin();
 
 private:
     WifiSettings settings_;
