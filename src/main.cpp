@@ -3,6 +3,7 @@
 #include "ApiBluetooth/ApiServerBluetoothBuilder.hpp"
 #include "ApiWifi/ApiServerWifiBuilder.hpp"
 #include "Clock/Clock.hpp"
+#include "Connectivity/OtaUpdateService.hpp"
 #include "Connectivity/WifiConnection.hpp"
 #include "Hub/WaterHubBuilder.hpp"
 #include "Hypervisor/Hypervisor.hpp"
@@ -15,6 +16,7 @@ ModbusMaster modbusNode;
 WaterHubBuilder waterHubBuilder(modbusNode, Serial2);
 Settings settings;
 std::unique_ptr<WifiConnection> wifiConnection;
+std::unique_ptr<OtaUpdateService> otaUpdateService;
 std::unique_ptr<WaterHub> waterHub;
 std::unique_ptr<Hypervisor> hypervisor;
 std::unique_ptr<AutomaticWatering> automaticWatering;
@@ -37,6 +39,9 @@ void setup()
 
     wifiConnection = std::make_unique<WifiConnection>(settingsSnapshot.wifiSettings);
     wifiConnection->begin();
+
+    otaUpdateService = std::make_unique<OtaUpdateService>(settingsSnapshot.apiAccessToken);
+    otaUpdateService->begin();
 
     systemClock.begin();
 
@@ -71,6 +76,7 @@ void loop()
 {
     systemClock.loop();
     apiServerBluetooth->loop();
+    otaUpdateService->loop();
 
     if (waterHub == nullptr)
     {
