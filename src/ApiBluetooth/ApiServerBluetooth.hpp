@@ -1,12 +1,13 @@
 #pragma once
 
 #include "NimBLECharacteristic.h"
+#include "NimBLEServer.h"
 #include "Command/GetApiAccessTokenCommand.hpp"
 #include "Command/GetWifiIpAddressCommand.hpp"
 #include "Command/GetWifiSettingsCommand.hpp"
 #include "Command/SaveWifiSettingsCommand.hpp"
 
-class ApiServerBluetooth : public NimBLECharacteristicCallbacks
+class ApiServerBluetooth : public NimBLECharacteristicCallbacks, public NimBLEServerCallbacks
 {
 public:
     static constexpr char DeviceName[] = "Automatic Watering Hub";
@@ -17,6 +18,7 @@ public:
     static constexpr char ApiAccessTokenUuid[] = "4d42b2d4-35ba-4b70-b8a2-d1cf01e904c1";
     static constexpr char LogNotificationsUuid[] = "4d42b2d5-35ba-4b70-b8a2-d1cf01e904c1";
     static constexpr uint32_t AccessPasskey = 482917;
+    static constexpr uint32_t FastAdvertisingDurationMs = 5 * 60 * 1000;
 
     ApiServerBluetooth(
         GetWifiSettingsCommand getWifiSettingsCommand,
@@ -46,7 +48,11 @@ private:
 
     void onRead(NimBLECharacteristic *characteristic, NimBLEConnInfo &connInfo) override;
     void onWrite(NimBLECharacteristic *characteristic, NimBLEConnInfo &connInfo) override;
+    void onDisconnect(NimBLEServer *server, NimBLEConnInfo &connInfo, int reason) override;
     void sendCommandResult(NimBLECharacteristic &characteristic, const ApiCommandResult &result);
+    void startAdvertising();
+    void switchToSlowAdvertisingIfDue();
+    void setAdvertisingInterval();
 
     GetWifiSettingsCommand getWifiSettingsCommand_;
     SaveWifiSettingsCommand saveWifiSettingsCommand_;
@@ -57,5 +63,7 @@ private:
     NimBLECharacteristic *wifiIpAddressCharacteristic_ = nullptr;
     NimBLECharacteristic *apiAccessTokenCharacteristic_ = nullptr;
     NimBLECharacteristic *logNotificationsCharacteristic_ = nullptr;
+    uint32_t advertisingStartedTimeMs_ = 0;
+    bool slowAdvertising_ = false;
     bool restartScheduled_ = false;
 };

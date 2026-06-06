@@ -4,6 +4,12 @@
 #include "Logging/Logger.hpp"
 #include "NimBLEDevice.h"
 
+namespace
+{
+constexpr uint16_t FAST_ADVERTISING_INTERVAL = 160;  // 100 ms in 0.625 ms units
+constexpr uint16_t SLOW_ADVERTISING_INTERVAL = 3200; // 2 s in 0.625 ms units
+}
+
 ApiServerBluetooth::ApiServerBluetooth(
     GetWifiSettingsCommand getWifiSettingsCommand,
     SaveWifiSettingsCommand saveWifiSettingsCommand,
@@ -24,6 +30,7 @@ void ApiServerBluetooth::begin()
     NimBLEDevice::setSecurityIOCap(BLE_HS_IO_DISPLAY_ONLY);
 
     NimBLEServer *server = NimBLEDevice::createServer();
+    server->setCallbacks(this, false);
     NimBLEService *service = server->createService(ServiceUuid);
     wifiSettingsCharacteristic_ = service->createCharacteristic(
         WifiSettingsUuid,
@@ -64,11 +71,15 @@ void ApiServerBluetooth::begin()
     server->start();
     NimBLEAdvertising *advertising = NimBLEDevice::getAdvertising();
     advertising->addServiceUUID(ServiceUuid);
-    NimBLEDevice::startAdvertising();
+    advertisingStartedTimeMs_ = millis();
+    slowAdvertising_ = false;
+    startAdvertising();
 }
 
 void ApiServerBluetooth::loop()
 {
+    switchToSlowAdvertisingIfDue();
+
     if (restartScheduled_)
     {
         delay(250);
@@ -107,6 +118,11 @@ void ApiServerBluetooth::onWrite(NimBLECharacteristic *characteristic, NimBLECon
     }
 }
 
+void ApiServerBluetooth::onDisconnect(NimBLEServer *, NimBLEConnInfo &, int)
+{
+    startAdvertising();
+}
+
 void ApiServerBluetooth::sendCommandResult(NimBLECharacteristic &characteristic, const ApiCommandResult &result)
 {
     JsonDocument response;
@@ -125,4 +141,43 @@ void ApiServerBluetooth::sendCommandResult(NimBLECharacteristic &characteristic,
     String payload;
     serializeJson(response, payload);
     characteristic.setValue(payload);
+}
+
+void ApiServerBluetooth::startAdvertising()
+{
+    setAdvertisingInterval();
+    NimBLEDevice::startAdvertising();
+}
+
+void ApiServerBluetooth::switchToSlowAdvertisingIfDue()
+{
+    if (slowAdvertising_ || millis() - advertisingStartedTimeMs_ < FastAdvertisingDurationMs)
+    {
+        return;
+    }
+
+    slowAdvertising_ = true;
+
+    NimBLEAdvertising *advertising = NimBLEDevice::getAdvertising();
+    const bool wasAdvertising = advertising->isAdvertising();
+    if (wasAdvertising)
+    {
+        advertising->stop();
+    }
+
+    setAdvertisingInterval();
+
+    if (wasAdvertising)
+    {
+        NimBLEDevice::startAdvertising();
+    }
+}
+
+void ApiServerBluetooth::setAdvertisingInterval()
+{
+    NimBLEAdvertising *advertising = NimBLEDevice::getAdvertising();
+    advertising->setAdvertisingInterval(
+        slowAdvertising_
+            ? SLOW_ADVERTISING_INTERVAL
+            : FAST_ADVERTISING_INTERVAL);
 }

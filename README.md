@@ -47,6 +47,11 @@ BLE device name: `Automatic Watering Hub`.
 
 Service UUID: `4d42b2d0-35ba-4b70-b8a2-d1cf01e904c1`.
 
+BLE advertising працює у двох режимах: перші 5 хвилин після старту контролер
+рекламується швидко, після цього перемикається на повільний advertising і
+залишається доступним для підключення. Після розриву BLE-з'єднання advertising
+запускається повторно.
+
 Characteristics:
 1. `4d42b2d1-35ba-4b70-b8a2-d1cf01e904c1` (`READ`) - повертає поточні Wifi settings.
 2. `4d42b2d2-35ba-4b70-b8a2-d1cf01e904c1` (`READ`, `WRITE`) - приймає нові Wifi settings і перезапускає контролер після успішного збереження.
@@ -200,5 +205,7 @@ AUTO_WATERING_HUB_OTA_PASSWORD='<api-access-token>' \
 
 # todo
 * Енергоощадність
+  * Додати фізичну кнопку для BLE config mode і після цього повністю вимикати
+    BLE advertising поза config mode.
 * Документація для розробника додатку та сервера
 * Документація поточної логіки
