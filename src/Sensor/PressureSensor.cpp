@@ -38,7 +38,6 @@ void PressureSensor::readPressure()
             result);
 
         lastReadPressure_ = NAN;
-        ++readingRevision_;
         return;
     }
 
@@ -47,7 +46,6 @@ void PressureSensor::readPressure()
     int16_t pressureRaw = (int16_t)modbusNode_.getResponseBuffer(2);
 
     lastReadPressure_ = convertToBar(pressureRaw / powf(10, decimal), unit);
-    ++readingRevision_;
 }
 
 void PressureSensor::setReadIntervalSeconds(uint32_t readIntervalSeconds)
@@ -63,11 +61,6 @@ uint32_t PressureSensor::getReadIntervalSeconds() const
 float PressureSensor::getLastReadPressure() const
 {
     return lastReadPressure_;
-}
-
-uint32_t PressureSensor::getReadingRevision() const
-{
-    return readingRevision_;
 }
 
 float PressureSensor::convertToBar(float value, uint16_t unit)

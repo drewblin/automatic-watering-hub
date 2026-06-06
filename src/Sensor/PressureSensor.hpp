@@ -16,7 +16,6 @@ public:
     void setReadIntervalSeconds(uint32_t readIntervalSeconds);
     uint32_t getReadIntervalSeconds() const;
     float getLastReadPressure() const;
-    uint32_t getReadingRevision() const;
 
 private:
     ModbusMaster &modbusNode_;
@@ -25,7 +24,6 @@ private:
     uint32_t readIntervalSeconds_;
     uint32_t lastReadTimeMs_ = 0;
     float lastReadPressure_ = NAN;
-    uint32_t readingRevision_ = 0;
 
     float convertToBar(float value, uint16_t unit);
 };

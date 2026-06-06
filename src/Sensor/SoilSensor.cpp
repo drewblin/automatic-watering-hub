@@ -39,7 +39,6 @@ void SoilSensor::readData()
 
         lastReadHumidity_ = NAN;
         lastReadTemperature_ = NAN;
-        ++readingRevision_;
 
         return;
     }
@@ -49,7 +48,6 @@ void SoilSensor::readData()
 
     lastReadTemperature_ = temperatureRaw / 10.0f;
     lastReadHumidity_ = humidityRaw / 10.0f;
-    ++readingRevision_;
 }
 
 void SoilSensor::setReadIntervalSeconds(uint32_t readIntervalSeconds)
@@ -70,9 +68,4 @@ float SoilSensor::getLastReadHumidity() const
 float SoilSensor::getLastReadTemperature() const
 {
     return lastReadTemperature_;
-}
-
-uint32_t SoilSensor::getReadingRevision() const
-{
-    return readingRevision_;
 }

@@ -74,7 +74,6 @@ void WaterCounter::readLiters()
 
     lastTickCount_ = tickCount;
     totalLiters_ += delta * litersPerTick_;
-    ++readingRevision_;
 }
 
 void WaterCounter::setReadIntervalSeconds(uint32_t readIntervalSeconds)
@@ -90,9 +89,4 @@ uint32_t WaterCounter::getReadIntervalSeconds() const
 float WaterCounter::getTotalLiters() const
 {
     return totalLiters_;
-}
-
-uint32_t WaterCounter::getReadingRevision() const
-{
-    return readingRevision_;
 }
