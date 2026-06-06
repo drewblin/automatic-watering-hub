@@ -27,8 +27,8 @@ void AutomaticWatering::processMagistralWaterCounter()
 
     magistralWaterCounterReadingRevision_ = counter->getReadingRevision();
 
-    Serial.print("Magistral water usage: ");
-    Serial.println(counter->getLastReadLiters());
+    Serial.print("Magistral water usage total: ");
+    Serial.println(counter->getTotalLiters());
 }
 
 void AutomaticWatering::processLeafWaterCounters()
@@ -45,8 +45,8 @@ void AutomaticWatering::processLeafWaterCounters()
 
         Serial.print("Leaf water counter ");
         Serial.print(i);
-        Serial.print(" usage: ");
-        Serial.println(counters[i]->getLastReadLiters());
+        Serial.print(" usage total: ");
+        Serial.println(counters[i]->getTotalLiters());
     }
 }
 

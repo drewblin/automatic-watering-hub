@@ -12,7 +12,7 @@ public:
     void readLiters();
     void setReadIntervalSeconds(uint32_t readIntervalSeconds);
     uint32_t getReadIntervalSeconds() const;
-    float getLastReadLiters() const;
+    float getTotalLiters() const;
     uint32_t getReadingRevision() const;
 
 private:
@@ -21,6 +21,6 @@ private:
     uint32_t readIntervalSeconds_;
     uint32_t lastReadTimeMs_ = 0;
     uint32_t lastTickCount_ = 0;
-    float lastReadLiters_ = 0;
+    float totalLiters_ = 0;
     uint32_t readingRevision_ = 0;
 };

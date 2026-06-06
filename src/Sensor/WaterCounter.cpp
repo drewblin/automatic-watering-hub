@@ -61,6 +61,10 @@ void WaterCounter::readLiters()
     pcnt_unit_get_count(pcntUnit_, &tickCount);
 
     int delta = tickCount - lastTickCount_;
+    if (delta < 0)
+    {
+        delta = 0;
+    }
 
     if (tickCount > INT16_MAX - 1000)
     {
@@ -69,7 +73,7 @@ void WaterCounter::readLiters()
     }
 
     lastTickCount_ = tickCount;
-    lastReadLiters_ = delta * litersPerTick_;
+    totalLiters_ += delta * litersPerTick_;
     ++readingRevision_;
 }
 
@@ -83,9 +87,9 @@ uint32_t WaterCounter::getReadIntervalSeconds() const
     return readIntervalSeconds_;
 }
 
-float WaterCounter::getLastReadLiters() const
+float WaterCounter::getTotalLiters() const
 {
-    return lastReadLiters_;
+    return totalLiters_;
 }
 
 uint32_t WaterCounter::getReadingRevision() const

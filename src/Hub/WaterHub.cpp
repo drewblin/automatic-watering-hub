@@ -82,3 +82,16 @@ void WaterHub::readSoilSensors(uint32_t currentTimeMs)
         soilSensors_[i]->readDataIfDue(currentTimeMs);
     }
 }
+
+bool WaterHub::hasOpenValve() const
+{
+    for (const auto &valve : getValves())
+    {
+        if (valve->isOpen())
+        {
+            return true;
+        }
+    }
+
+    return false;
+}

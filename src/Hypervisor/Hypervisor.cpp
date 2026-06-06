@@ -3,7 +3,8 @@
 #include <Arduino.h>
 #include "Logging/Logger.hpp"
 
-Hypervisor::Hypervisor(WaterHub &waterHub) : waterHub_(waterHub)
+Hypervisor::Hypervisor(const SettingsSnapshot &settings, WaterHub &waterHub)
+    : settings_(settings), waterHub_(waterHub)
 {
 }
 
@@ -22,22 +23,40 @@ void Hypervisor::loop()
 void Hypervisor::checkUnauthorizedWaterFlow()
 {
     const WaterCounter *magistralCounter = waterHub_.getMagistralWaterCounter();
-    if (!hasNewMagistralWaterCounterReading(
-            unauthorizedFlowMagistralWaterCounterReadingRevision_))
+    if (waterHub_.hasOpenValve())
+    {
+        unauthorizedFlowDetected_ = false;
+        unauthorizedFlowErrorLogged_ = false;
+        unauthorizedFlowWateringWorked_ = true;
+        return;
+    }
+
+    const uint32_t now = millis();
+    if (now - unauthorizedFlowLastCheckTimeMs_ < settings_.globalSettings.idleWaterCounterReadIntervalSeconds * 1000)
     {
         return;
     }
 
-    float leafWaterUsageLiters = 0;
+    unauthorizedFlowLastCheckTimeMs_ = now;
+    const float currentMagistralLiters = magistralCounter->getTotalLiters();
+    float currentLeafLiters = 0;
     for (const auto &counter : waterHub_.getLeafWaterCounters())
     {
-        leafWaterUsageLiters += counter->getLastReadLiters();
+        currentLeafLiters += counter->getTotalLiters();
     }
 
-    const float unaccountedWaterUsageLiters =
-        magistralCounter->getLastReadLiters() - leafWaterUsageLiters;
-    if (unaccountedWaterUsageLiters <= WATER_COUNTER_TOLERANCE_LITERS)
+    const float unauthorizedWaterUsageLiters =
+        (currentMagistralLiters - unauthorizedFlowLastMagistralLiters_) -
+        (currentLeafLiters - unauthorizedFlowLastLeafLiters_);
+
+    unauthorizedFlowLastMagistralLiters_ = currentMagistralLiters;
+    unauthorizedFlowLastLeafLiters_ = currentLeafLiters;
+
+    if (
+        unauthorizedFlowWateringWorked_ ||
+        unauthorizedWaterUsageLiters <= WATER_COUNTER_TOLERANCE_LITERS)
     {
+        unauthorizedFlowWateringWorked_ = false;
         unauthorizedFlowDetected_ = false;
         unauthorizedFlowErrorLogged_ = false;
         return;
@@ -45,18 +64,10 @@ void Hypervisor::checkUnauthorizedWaterFlow()
 
     if (!unauthorizedFlowDetected_)
     {
-        for (const auto &valve : waterHub_.getValves())
-        {
-            if (valve->isOpen())
-            {
-                return;
-            }
-        }
-
         Logger::w(
             "Hypervisor",
-            "Unauthorized water flow detected: %.2f liters are not accounted for by leaf counters. Closing all valves",
-            unaccountedWaterUsageLiters);
+            "Unauthorized water flow detected while watering is off: %.2f liters are not accounted for by leaf counters. Closing all valves",
+            unauthorizedWaterUsageLiters);
 
         closeAllValves();
         unauthorizedFlowDetectedTimeMs_ = millis();
@@ -65,12 +76,12 @@ void Hypervisor::checkUnauthorizedWaterFlow()
     }
 
     if (!unauthorizedFlowErrorLogged_ &&
-        millis() - unauthorizedFlowDetectedTimeMs_ >= UNAUTHORIZED_FLOW_ERROR_DELAY_MS)
+        now - unauthorizedFlowDetectedTimeMs_ >= UNAUTHORIZED_FLOW_ERROR_DELAY_MS)
     {
         Logger::e(
             "Hypervisor",
             "Unauthorized water flow persists after closing all valves: %.2f liters are not accounted for by leaf counters",
-            unaccountedWaterUsageLiters);
+            unauthorizedWaterUsageLiters);
 
         unauthorizedFlowErrorLogged_ = true;
     }
@@ -78,25 +89,19 @@ void Hypervisor::checkUnauthorizedWaterFlow()
 
 void Hypervisor::checkOpenValvesWithoutWaterFlow()
 {
-    if (!hasNewMagistralWaterCounterReading(
-            openValveWithoutFlowMagistralWaterCounterReadingRevision_))
+    const uint32_t now = millis();
+    if (now - openValveWithoutFlowLastCheckTimeMs_ < settings_.globalSettings.wateringWaterCounterReadIntervalSeconds * 1000)
     {
         return;
     }
 
-    bool hasOpenValve = false;
-    for (const auto &valve : waterHub_.getValves())
-    {
-        if (valve->isOpen())
-        {
-            hasOpenValve = true;
-            break;
-        }
-    }
+    openValveWithoutFlowLastCheckTimeMs_ = now;
+    const float currentMagistralLiters = waterHub_.getMagistralWaterCounter()->getTotalLiters();
+    const float magistralUsageLiters = currentMagistralLiters - openValveWithoutFlowLastMagistralLiters_;
+    openValveWithoutFlowLastMagistralLiters_ = currentMagistralLiters;
 
-    const bool hasMagistralWaterFlow =
-        waterHub_.getMagistralWaterCounter()->getLastReadLiters() > WATER_COUNTER_TOLERANCE_LITERS;
-    if (!hasOpenValve || hasMagistralWaterFlow)
+    const bool hasMagistralWaterFlow = magistralUsageLiters > WATER_COUNTER_TOLERANCE_LITERS;
+    if (!waterHub_.hasOpenValve() || hasMagistralWaterFlow)
     {
         openValveWithoutFlowDetected_ = false;
         openValveWithoutFlowErrorLogged_ = false;
@@ -111,7 +116,7 @@ void Hypervisor::checkOpenValvesWithoutWaterFlow()
     }
 
     if (!openValveWithoutFlowErrorLogged_ &&
-        millis() - openValveWithoutFlowDetectedTimeMs_ >= OPEN_VALVE_WITHOUT_FLOW_ERROR_DELAY_MS)
+        now - openValveWithoutFlowDetectedTimeMs_ >= OPEN_VALVE_WITHOUT_FLOW_ERROR_DELAY_MS)
     {
         Logger::e(
             "Hypervisor",
@@ -119,19 +124,6 @@ void Hypervisor::checkOpenValvesWithoutWaterFlow()
 
         openValveWithoutFlowErrorLogged_ = true;
     }
-}
-
-bool Hypervisor::hasNewMagistralWaterCounterReading(uint32_t &lastProcessedRevision) const
-{
-    const uint32_t currentRevision =
-        waterHub_.getMagistralWaterCounter()->getReadingRevision();
-    if (currentRevision == lastProcessedRevision)
-    {
-        return false;
-    }
-
-    lastProcessedRevision = currentRevision;
-    return true;
 }
 
 void Hypervisor::closeAllValves()

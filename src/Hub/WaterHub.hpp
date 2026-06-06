@@ -25,6 +25,8 @@ public:
     const std::vector<std::unique_ptr<SoilSensor>> &getSoilSensors() const;
     const std::vector<std::unique_ptr<Valve>> &getValves() const;
 
+    bool hasOpenValve() const;
+
 private:
     std::unique_ptr<WaterCounter> magistralWaterCounter_;
     std::unique_ptr<PressureSensor> pressureSensor_;
