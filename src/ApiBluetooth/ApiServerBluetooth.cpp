@@ -70,10 +70,13 @@ void ApiServerBluetooth::begin()
 
     server->start();
     NimBLEAdvertising *advertising = NimBLEDevice::getAdvertising();
+    advertising->enableScanResponse(true);
+    advertising->setName(DeviceName);
     advertising->addServiceUUID(ServiceUuid);
     advertisingStartedTimeMs_ = millis();
     slowAdvertising_ = false;
     startAdvertising();
+    Logger::i("ApiServerBluetooth", "BLE advertising started as %s", DeviceName);
 }
 
 void ApiServerBluetooth::loop()

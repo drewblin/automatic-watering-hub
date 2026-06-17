@@ -341,7 +341,7 @@ uint32_t Settings::readUInt(Preferences &preferences, bool storageAvailable, con
 {
     if (!storageAvailable || !preferences.isKey(key))
     {
-        ESP_LOGE("Settings", "Missing setting %s. Using hardcoded default", key);
+        ESP_LOGW("Settings", "Missing setting %s. Using hardcoded default", key);
         return defaultValue;
     }
     return preferences.getUInt(key, defaultValue);
@@ -351,7 +351,7 @@ uint8_t Settings::readUChar(Preferences &preferences, bool storageAvailable, con
 {
     if (!storageAvailable || !preferences.isKey(key))
     {
-        ESP_LOGE("Settings", "Missing setting %s. Using hardcoded default", key);
+        ESP_LOGW("Settings", "Missing setting %s. Using hardcoded default", key);
         return defaultValue;
     }
     return preferences.getUChar(key, defaultValue);
@@ -362,14 +362,14 @@ uint8_t Settings::readCount(Preferences &preferences, bool storageAvailable, con
     static constexpr uint8_t MAX_SETTING_COUNT = 32;
     if (!storageAvailable || !preferences.isKey(key))
     {
-        ESP_LOGE("Settings", "Missing setting %s. Using hardcoded default", key);
+        ESP_LOGW("Settings", "Missing setting %s. Using hardcoded default", key);
         return 0;
     }
 
     uint8_t value = preferences.getUChar(key);
     if (value > MAX_SETTING_COUNT)
     {
-        ESP_LOGE("Settings", "Invalid setting %s. Using hardcoded default", key);
+        ESP_LOGW("Settings", "Invalid setting %s. Using hardcoded default", key);
         return 0;
     }
     return value;
@@ -379,7 +379,7 @@ float Settings::readFloat(Preferences &preferences, bool storageAvailable, const
 {
     if (!storageAvailable || !preferences.isKey(key))
     {
-        ESP_LOGE("Settings", "Missing setting %s. Using hardcoded default", key);
+        ESP_LOGW("Settings", "Missing setting %s. Using hardcoded default", key);
         return defaultValue;
     }
     return preferences.getFloat(key, defaultValue);
@@ -389,7 +389,7 @@ String Settings::readString(Preferences &preferences, bool storageAvailable, con
 {
     if (!storageAvailable || !preferences.isKey(key))
     {
-        ESP_LOGE("Settings", "Missing setting %s. Using hardcoded default", key);
+        ESP_LOGW("Settings", "Missing setting %s. Using hardcoded default", key);
         return defaultValue;
     }
     return preferences.getString(key, defaultValue);

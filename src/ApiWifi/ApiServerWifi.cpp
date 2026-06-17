@@ -1,6 +1,7 @@
 #include "ApiServerWifi.hpp"
 
 #include <Arduino.h>
+#include <WiFi.h>
 #include "Logging/Logger.hpp"
 #include "TlsCertificate.hpp"
 #include "esp_https_server.h"
@@ -29,6 +30,12 @@ void ApiServerWifi::registerWaterHubRoutes(
 
 void ApiServerWifi::begin()
 {
+    if (WiFi.status() != WL_CONNECTED)
+    {
+        Logger::w("ApiServerWifi", "HTTPS API server is disabled because WiFi is not connected");
+        return;
+    }
+
     httpd_ssl_config_t config = HTTPD_SSL_CONFIG_DEFAULT();
     config.port_secure = port_;
     config.servercert = TlsCertificate::Certificate;
