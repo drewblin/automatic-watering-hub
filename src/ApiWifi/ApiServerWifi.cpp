@@ -191,7 +191,7 @@ esp_err_t ApiServerWifi::handleSaveSettings(httpd_req_t *request)
         esp_err_t responseResult = server->sendCommandResult(*request, result);
         if (result.success)
         {
-            delay(100);
+            delay(2000);
             ESP.restart();
         }
         return responseResult;

@@ -85,7 +85,7 @@ void ApiServerBluetooth::loop()
 
     if (restartScheduled_)
     {
-        delay(250);
+        delay(2000);
         ESP.restart();
     }
 }
