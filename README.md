@@ -212,6 +212,7 @@ ESP32.
 - [Light sleep контролера](tasks/controller-light-sleep.md)
 - [Живлення Modbus-датчиків і RS485](tasks/modbus-sensors-rs485-power.md)
 - [Клапани і реле](tasks/valves-and-relays-power.md)
+- [WiFi-команда закриття всіх клапанів](tasks/wifi-close-all-valves-command.md)
 - [Водяні лічильники і wake-up](tasks/water-counters-wakeup.md)
 
 ## Статус проекту
