@@ -120,7 +120,10 @@ void WaterHub::updateSensorReadIntervals()
 
 void WaterHub::readWaterCounters(uint32_t currentTimeMs)
 {
-    magistralWaterCounter_->readLitersIfDue(currentTimeMs);
+    if (magistralWaterCounter_ != nullptr)
+    {
+        magistralWaterCounter_->readLitersIfDue(currentTimeMs);
+    }
 
     for (const auto &counter : leafWaterCounters_)
     {
@@ -130,7 +133,10 @@ void WaterHub::readWaterCounters(uint32_t currentTimeMs)
 
 void WaterHub::readPressureSensor(uint32_t currentTimeMs)
 {
-    pressureSensor_->readPressureIfDue(currentTimeMs);
+    if (pressureSensor_ != nullptr)
+    {
+        pressureSensor_->readPressureIfDue(currentTimeMs);
+    }
 }
 
 void WaterHub::readSoilSensors(uint32_t currentTimeMs)

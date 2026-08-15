@@ -23,11 +23,6 @@ struct SettingsSnapshot
     std::vector<WaterCounterSetting> leafWaterCounterSettings;
     std::vector<SoilSensorSetting> soilSensorSettings;
 
-    bool hasRequiredWaterHubSettings() const
-    {
-        return hasPressureSensorSetting() && hasMagistralWaterCounterSetting();
-    }
-
     bool hasPressureSensorSetting() const
     {
         return pressureSensorSetting.has_value();

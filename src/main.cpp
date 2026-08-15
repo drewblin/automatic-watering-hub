@@ -53,20 +53,13 @@ void setup()
         systemClock);
     apiServerWifi = apiServerWifiBuilder.build();
 
-    if (settingsSnapshot.hasRequiredWaterHubSettings())
-    {
-        waterHub = std::make_unique<WaterHub>(waterHubBuilder.build(settingsSnapshot));
-        hypervisor = std::make_unique<Hypervisor>(settingsSnapshot, *waterHub);
-        automaticWatering = std::make_unique<AutomaticWatering>(*waterHub, settingsSnapshot, systemClock);
+    waterHub = std::make_unique<WaterHub>(waterHubBuilder.build(settingsSnapshot));
+    hypervisor = std::make_unique<Hypervisor>(settingsSnapshot, *waterHub);
+    automaticWatering = std::make_unique<AutomaticWatering>(*waterHub, settingsSnapshot, systemClock);
 
-        apiServerWifiBuilder.enableWaterHubRoutes(*apiServerWifi, *waterHub);
+    apiServerWifiBuilder.enableWaterHubRoutes(*apiServerWifi, *waterHub);
 
-        hypervisor->begin();
-    }
-    else
-    {
-        Logger::e("Main", "Water hub is disabled because required settings are missing");
-    }
+    hypervisor->begin();
 
     apiServerBluetooth->begin();
     apiServerWifi->begin();

@@ -48,6 +48,7 @@ void ApiServerWifi::begin()
         Logger::e("ApiServerWifi", "Failed to start HTTPS server");
         return;
     }
+    httpd_register_err_handler(server_, HTTPD_404_NOT_FOUND, handleNotFound);
 
     httpd_uri_t changeDeviceAddress = {
         .uri = "/api/modbus/device-address",
@@ -89,6 +90,33 @@ void ApiServerWifi::begin()
             .user_ctx = this};
         httpd_register_uri_handler(server_, &getSensorMetrics);
     }
+}
+
+const char *ApiServerWifi::methodName(int method)
+{
+    switch (method)
+    {
+    case HTTP_GET:
+        return "GET";
+    case HTTP_POST:
+        return "POST";
+    case HTTP_PUT:
+        return "PUT";
+    case HTTP_DELETE:
+        return "DELETE";
+    default:
+        return "UNKNOWN";
+    }
+}
+
+void ApiServerWifi::logRequest(httpd_req_t &request) const
+{
+    ESP_LOGI(
+        "ApiServerWifi",
+        "HTTPS API request: %s %s contentLength=%u",
+        methodName(request.method),
+        request.uri,
+        request.content_len);
 }
 
 bool ApiServerWifi::authorize(httpd_req_t &request) const
@@ -196,6 +224,27 @@ esp_err_t ApiServerWifi::handleSaveSettings(httpd_req_t *request)
         }
         return responseResult;
     });
+}
+
+esp_err_t ApiServerWifi::handleNotFound(httpd_req_t *request, httpd_err_code_t)
+{
+    ESP_LOGI(
+        "ApiServerWifi",
+        "HTTPS API request: %s %s contentLength=%u status=404",
+        methodName(request->method),
+        request->uri,
+        request->content_len);
+
+    JsonDocument response;
+    response["success"] = false;
+    response["data"] = nullptr;
+    response["error"] = "Not found";
+
+    String payload;
+    serializeJson(response, payload);
+    httpd_resp_set_status(request, "404 Not Found");
+    httpd_resp_set_type(request, HTTPD_TYPE_JSON);
+    return httpd_resp_send(request, payload.c_str(), payload.length());
 }
 
 esp_err_t ApiServerWifi::sendCommandResult(httpd_req_t &request, const ApiCommandResult &result) const

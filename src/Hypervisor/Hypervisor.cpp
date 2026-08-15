@@ -23,6 +23,13 @@ void Hypervisor::loop()
 void Hypervisor::checkUnauthorizedWaterFlow()
 {
     const WaterCounter *magistralCounter = waterHub_.getMagistralWaterCounter();
+    if (magistralCounter == nullptr)
+    {
+        unauthorizedFlowDetected_ = false;
+        unauthorizedFlowErrorLogged_ = false;
+        return;
+    }
+
     if (waterHub_.hasOpenValve())
     {
         unauthorizedFlowDetected_ = false;
@@ -89,6 +96,14 @@ void Hypervisor::checkUnauthorizedWaterFlow()
 
 void Hypervisor::checkOpenValvesWithoutWaterFlow()
 {
+    const WaterCounter *magistralCounter = waterHub_.getMagistralWaterCounter();
+    if (magistralCounter == nullptr)
+    {
+        openValveWithoutFlowDetected_ = false;
+        openValveWithoutFlowErrorLogged_ = false;
+        return;
+    }
+
     const uint32_t now = millis();
     if (now - openValveWithoutFlowLastCheckTimeMs_ < settings_.globalSettings.wateringWaterCounterReadIntervalSeconds * 1000)
     {
@@ -96,7 +111,7 @@ void Hypervisor::checkOpenValvesWithoutWaterFlow()
     }
 
     openValveWithoutFlowLastCheckTimeMs_ = now;
-    const float currentMagistralLiters = waterHub_.getMagistralWaterCounter()->getTotalLiters();
+    const float currentMagistralLiters = magistralCounter->getTotalLiters();
     const float magistralUsageLiters = currentMagistralLiters - openValveWithoutFlowLastMagistralLiters_;
     openValveWithoutFlowLastMagistralLiters_ = currentMagistralLiters;
 

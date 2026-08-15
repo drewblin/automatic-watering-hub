@@ -112,7 +112,7 @@ void Settings::begin()
             readUChar(preferences, storageAvailable, (prefix + SOIL_SENSOR_SUFFIX).c_str(), 1));
     }
 
-    bool hasPressureSensorSetting = hasRequiredKey(preferences, storageAvailable, PRESSURE_SENSOR_ADDRESS_KEY);
+    bool hasPressureSensorSetting = storageAvailable && preferences.isKey(PRESSURE_SENSOR_ADDRESS_KEY);
     snapshot_.pressureSensorSetting.reset();
     if (hasPressureSensorSetting)
     {
@@ -121,9 +121,9 @@ void Settings::begin()
             readString(preferences, storageAvailable, PRESSURE_SENSOR_NAME_KEY, "Pressure sensor").c_str());
     }
 
-    bool hasMagistralWaterCounterPin = hasRequiredKey(preferences, storageAvailable, MAGISTRAL_WATER_COUNTER_PIN_KEY);
-    bool hasMagistralWaterCounterName = hasRequiredKey(preferences, storageAvailable, MAGISTRAL_WATER_COUNTER_NAME_KEY);
-    bool hasMagistralWaterCounterLitersPerTick = hasRequiredKey(preferences, storageAvailable, MAGISTRAL_WATER_COUNTER_LITERS_PER_TICK_KEY);
+    bool hasMagistralWaterCounterPin = storageAvailable && preferences.isKey(MAGISTRAL_WATER_COUNTER_PIN_KEY);
+    bool hasMagistralWaterCounterName = storageAvailable && preferences.isKey(MAGISTRAL_WATER_COUNTER_NAME_KEY);
+    bool hasMagistralWaterCounterLitersPerTick = storageAvailable && preferences.isKey(MAGISTRAL_WATER_COUNTER_LITERS_PER_TICK_KEY);
     snapshot_.magistralWaterCounterSetting.reset();
     if (hasMagistralWaterCounterPin &&
         hasMagistralWaterCounterName &&
@@ -399,16 +399,6 @@ bool Settings::putString(Preferences &preferences, const char *key, const char *
 {
     size_t savedLength = preferences.putString(key, value);
     return savedLength == strlen(value) && preferences.getString(key) == value;
-}
-
-bool Settings::hasRequiredKey(Preferences &preferences, bool storageAvailable, const char *key)
-{
-    if (!storageAvailable || !preferences.isKey(key))
-    {
-        ESP_LOGE("Settings", "Missing required setting %s. Water hub will not start", key);
-        return false;
-    }
-    return true;
 }
 
 SettingsSnapshot Settings::get() const

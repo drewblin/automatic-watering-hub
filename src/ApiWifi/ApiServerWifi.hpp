@@ -57,6 +57,7 @@ private:
     template <typename Handler>
     esp_err_t authorizeAndHandle(httpd_req_t &request, Handler handler)
     {
+        logRequest(request);
         if (!authorize(request))
         {
             return sendCommandResult(request, ApiCommandResult(401, false));
@@ -69,7 +70,10 @@ private:
     static esp_err_t handleGetSensorMetrics(httpd_req_t *request);
     static esp_err_t handleGetSettings(httpd_req_t *request);
     static esp_err_t handleSaveSettings(httpd_req_t *request);
+    static esp_err_t handleNotFound(httpd_req_t *request, httpd_err_code_t error);
+    static const char *methodName(int method);
 
+    void logRequest(httpd_req_t &request) const;
     bool authorize(httpd_req_t &request) const;
     ApiCommandResult readRequestBody(httpd_req_t &request, String &payload) const;
     esp_err_t sendCommandResult(httpd_req_t &request, const ApiCommandResult &result) const;

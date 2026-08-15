@@ -50,10 +50,6 @@ private:
         Preferences &preferences,
         const char *key,
         const char *value);
-    static bool hasRequiredKey(
-        Preferences &preferences,
-        bool storageAvailable,
-        const char *key);
 
     SettingsSnapshot snapshot_;
 };
