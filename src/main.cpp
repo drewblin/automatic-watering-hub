@@ -57,6 +57,7 @@ void setup()
     hypervisor = std::make_unique<Hypervisor>(settingsSnapshot, *waterHub);
     automaticWatering = std::make_unique<AutomaticWatering>(*waterHub, settingsSnapshot, systemClock);
 
+    Serial.println("[diag] enable water routes");
     apiServerWifiBuilder.enableWaterHubRoutes(*apiServerWifi, *waterHub);
 
     hypervisor->begin();
