@@ -111,7 +111,7 @@ const char *ApiServerWifi::methodName(int method)
 
 void ApiServerWifi::logRequest(httpd_req_t &request) const
 {
-    ESP_LOGI(
+    Logger::i(
         "ApiServerWifi",
         "HTTPS API request: %s %s contentLength=%u",
         methodName(request.method),
@@ -228,7 +228,7 @@ esp_err_t ApiServerWifi::handleSaveSettings(httpd_req_t *request)
 
 esp_err_t ApiServerWifi::handleNotFound(httpd_req_t *request, httpd_err_code_t)
 {
-    ESP_LOGI(
+    Logger::i(
         "ApiServerWifi",
         "HTTPS API request: %s %s contentLength=%u status=404",
         methodName(request->method),

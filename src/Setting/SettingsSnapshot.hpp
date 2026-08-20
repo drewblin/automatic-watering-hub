@@ -14,6 +14,7 @@ struct SettingsSnapshot
 {
     GlobalSettings globalSettings;
     WifiSettings wifiSettings;
+    std::string deviceHostname;
     std::string apiAccessToken;
     std::string remoteLogUrl;
     std::string remoteLogToken;

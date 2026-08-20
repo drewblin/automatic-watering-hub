@@ -25,7 +25,7 @@ std::unique_ptr<ApiServerWifi> apiServerWifi;
 
 void setup()
 {
-    Serial.begin(115200);
+    Serial.begin(9600);
 
     Serial2.begin(9600, SERIAL_8N1, 16, 17);
 
@@ -37,10 +37,14 @@ void setup()
     ApiServerBluetoothBuilder apiServerBluetoothBuilder(settingsSnapshot, settings);
     apiServerBluetooth = apiServerBluetoothBuilder.build();
 
-    wifiConnection = std::make_unique<WifiConnection>(settingsSnapshot.wifiSettings);
+    wifiConnection = std::make_unique<WifiConnection>(
+        settingsSnapshot.wifiSettings,
+        settingsSnapshot.deviceHostname);
     wifiConnection->begin();
 
-    otaUpdateService = std::make_unique<OtaUpdateService>(settingsSnapshot.apiAccessToken);
+    otaUpdateService = std::make_unique<OtaUpdateService>(
+        settingsSnapshot.apiAccessToken,
+        settingsSnapshot.deviceHostname);
     otaUpdateService->begin();
 
     systemClock.begin();
@@ -57,7 +61,6 @@ void setup()
     hypervisor = std::make_unique<Hypervisor>(settingsSnapshot, *waterHub);
     automaticWatering = std::make_unique<AutomaticWatering>(*waterHub, settingsSnapshot, systemClock);
 
-    Serial.println("[diag] enable water routes");
     apiServerWifiBuilder.enableWaterHubRoutes(*apiServerWifi, *waterHub);
 
     hypervisor->begin();

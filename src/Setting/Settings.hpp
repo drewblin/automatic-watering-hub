@@ -21,6 +21,7 @@ public:
     bool saveWifiSettings(const WifiSettings &wifiSettings, String &error);
 
 private:
+    static std::string generateDeviceHostname();
     static std::string generateApiAccessToken();
     static uint32_t readUInt(
         Preferences &preferences,

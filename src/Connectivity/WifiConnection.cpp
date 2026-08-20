@@ -1,9 +1,12 @@
 #include "WifiConnection.hpp"
+#include <utility>
+#include <ESPmDNS.h>
 #include "WiFi.h"
 #include "Logging/Logger.hpp"
 
-WifiConnection::WifiConnection(WifiSettings settings)
-    : settings_(settings)
+WifiConnection::WifiConnection(WifiSettings settings, std::string hostname)
+    : settings_(settings),
+      hostname_(std::move(hostname))
 {
 }
 
@@ -24,6 +27,10 @@ bool WifiConnection::begin()
 
     WiFi.persistent(false);
     WiFi.mode(WIFI_STA);
+    if (!hostname_.empty())
+    {
+        WiFi.setHostname(hostname_.c_str());
+    }
     WiFi.setSleep(WIFI_PS_MAX_MODEM);
     WiFi.begin(settings_.ssid.c_str(), settings_.password.c_str());
 
@@ -39,6 +46,18 @@ bool WifiConnection::begin()
         Serial.print("WiFi connected. IP: ");
         Serial.println(WiFi.localIP());
         WiFi.setSleep(WIFI_PS_MAX_MODEM);
+        if (!hostname_.empty())
+        {
+            if (MDNS.begin(hostname_.c_str()))
+            {
+                MDNS.addService("https", "tcp", 443);
+                Logger::i("WifiConnection", "mDNS started as %s.local", hostname_.c_str());
+            }
+            else
+            {
+                Logger::w("WifiConnection", "Failed to start mDNS for hostname %s", hostname_.c_str());
+            }
+        }
         return true;
     }
 

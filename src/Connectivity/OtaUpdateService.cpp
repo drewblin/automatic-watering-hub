@@ -4,8 +4,9 @@
 #include <WiFi.h>
 #include "Logging/Logger.hpp"
 
-OtaUpdateService::OtaUpdateService(const std::string &password)
-    : password_(password)
+OtaUpdateService::OtaUpdateService(const std::string &password, const std::string &hostname)
+    : password_(password),
+      hostname_(hostname)
 {
 }
 
@@ -28,7 +29,10 @@ void OtaUpdateService::begin()
         return;
     }
 
-    ArduinoOTA.setHostname("automatic-watering-hub");
+    if (!hostname_.empty())
+    {
+        ArduinoOTA.setHostname(hostname_.c_str());
+    }
     ArduinoOTA.setPassword(password_.c_str());
 
     ArduinoOTA.onStart([]()

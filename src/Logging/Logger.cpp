@@ -3,11 +3,14 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
+#include <NimBLEDevice.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <cmath>
+#include <vector>
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
@@ -30,7 +33,7 @@ void Logger::begin(const std::string &url, const std::string &authorizationToken
     QueueHandle_t queue = xQueueCreate(QueueLength, sizeof(DeliveryItem));
     if (queue == nullptr)
     {
-        ESP_LOGE("Logger", "Failed to allocate remote log queue");
+        Serial.println("E (0) Logger: Failed to allocate remote log queue");
         return;
     }
 
@@ -38,7 +41,7 @@ void Logger::begin(const std::string &url, const std::string &authorizationToken
     BaseType_t result = xTaskCreate(worker, "log-delivery", WorkerStackSize, nullptr, 1, nullptr);
     if (result != pdPASS)
     {
-        ESP_LOGE("Logger", "Failed to start remote log delivery task");
+        Serial.println("E (0) Logger: Failed to start remote log delivery task");
         vQueueDelete(queue);
         queue_ = nullptr;
         return;
@@ -128,10 +131,6 @@ void Logger::write(esp_log_level_t level, const char *tag, const char *format, v
 {
     const char *safeTag = tag == nullptr ? "" : tag;
     const char *safeFormat = format == nullptr ? "" : format;
-    va_list localArguments;
-    va_copy(localArguments, arguments);
-    esp_log_writev(level, safeTag, safeFormat, localArguments);
-    va_end(localArguments);
 
     DeliveryItem item = {};
     item.type = DeliveryType::Log;
@@ -139,6 +138,13 @@ void Logger::write(esp_log_level_t level, const char *tag, const char *format, v
     item.record.uptimeMs = millis();
     std::snprintf(item.record.tag, sizeof(item.record.tag), "%s", safeTag);
     std::vsnprintf(item.record.message, sizeof(item.record.message), safeFormat, arguments);
+
+    Serial.printf(
+        "%s (%lu) %s: %s\r\n",
+        levelName(level),
+        static_cast<unsigned long>(item.record.uptimeMs),
+        item.record.tag,
+        item.record.message);
 
     QueueHandle_t queue = static_cast<QueueHandle_t>(queue_);
     if (queue != nullptr && xQueueSend(queue, &item, 0) != pdTRUE)
@@ -182,15 +188,52 @@ void Logger::sendBleNotification(const char *payload)
     NimBLECharacteristic *characteristic = bleCharacteristic_.load();
     if (characteristic == nullptr)
     {
-        ESP_LOGW("Logger", "Failed to send BLE log notification: characteristic is not configured");
+        Serial.println("W (0) Logger: Failed to send BLE log notification: characteristic is not configured");
         return;
     }
 
-    characteristic->setValue(payload);
-    if (!characteristic->notify())
+    char notificationPayload[PayloadCapacity + 2];
+    std::snprintf(notificationPayload, sizeof(notificationPayload), "%s\n", payload == nullptr ? "" : payload);
+
+    NimBLEServer *server = NimBLEDevice::getServer();
+    if (server == nullptr)
     {
-        ESP_LOGW("Logger", "Failed to send BLE log notification");
+        Serial.println("W (0) Logger: Failed to send BLE log notification: server is not configured");
+        return;
     }
+
+    const std::vector<uint16_t> peers = server->getPeerDevices();
+    for (uint16_t connHandle : peers)
+    {
+        const uint16_t mtu = server->getPeerMTU(connHandle);
+        const std::size_t chunkCapacity = mtu > 3
+                                              ? std::max<std::size_t>(mtu - 3, FallbackBleNotificationChunkCapacity)
+                                              : FallbackBleNotificationChunkCapacity;
+        if (!sendBleNotificationChunks(*characteristic, connHandle, notificationPayload, chunkCapacity))
+        {
+            return;
+        }
+    }
+}
+
+bool Logger::sendBleNotificationChunks(NimBLECharacteristic &characteristic, uint16_t connHandle, const char *payload, std::size_t chunkCapacity)
+{
+    const std::size_t safeChunkCapacity = chunkCapacity == 0 ? FallbackBleNotificationChunkCapacity : chunkCapacity;
+    const std::size_t payloadLength = std::strlen(payload == nullptr ? "" : payload);
+    for (std::size_t offset = 0; offset < payloadLength; offset += safeChunkCapacity)
+    {
+        const std::size_t chunkLength = std::min(safeChunkCapacity, payloadLength - offset);
+        if (!characteristic.notify(
+                reinterpret_cast<const uint8_t *>(payload + offset),
+                chunkLength,
+                connHandle))
+        {
+            Serial.println("W (0) Logger: Failed to send BLE log notification");
+            return false;
+        }
+        delay(5);
+    }
+    return true;
 }
 
 void Logger::sendHttpsNotification(char *payload, const char *path)
@@ -202,7 +245,7 @@ void Logger::sendHttpsNotification(char *payload, const char *path)
 
     if (WiFi.status() != WL_CONNECTED)
     {
-        ESP_LOGW("Logger", "Failed to send HTTPS log notification: WiFi is not connected");
+        Serial.println("W (0) Logger: Failed to send HTTPS log notification: WiFi is not connected");
         return;
     }
 
@@ -216,7 +259,7 @@ void Logger::sendHttpsNotification(char *payload, const char *path)
     std::string targetUrl = buildRemoteUrl(path);
     if (!http.begin(client, targetUrl.c_str()))
     {
-        ESP_LOGW("Logger", "Failed to initialize HTTPS log notification request");
+        Serial.println("W (0) Logger: Failed to initialize HTTPS log notification request");
         return;
     }
 
@@ -225,7 +268,7 @@ void Logger::sendHttpsNotification(char *payload, const char *path)
     int statusCode = http.POST(reinterpret_cast<uint8_t *>(payload), std::strlen(payload));
     if (statusCode <= 0 || statusCode >= 400)
     {
-        ESP_LOGW("Logger", "Failed to send HTTPS log notification: status code %d", statusCode);
+        Serial.printf("W (0) Logger: Failed to send HTTPS log notification: status code %d\r\n", statusCode);
     }
     http.end();
 }

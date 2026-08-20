@@ -92,7 +92,7 @@ UUID сервісу:
 | --- | --- | --- | --- |
 | WifiSettings | `4d42b2d1-35ba-4b70-b8a2-d1cf01e904c1` | `READ`, encrypted, authenticated | Поточні Wi-Fi settings |
 | SaveWifiSettings | `4d42b2d2-35ba-4b70-b8a2-d1cf01e904c1` | `READ`, `WRITE`, encrypted, authenticated | Запис нових Wi-Fi settings; результат читається з цього ж characteristic value |
-| WifiIpAddress | `4d42b2d3-35ba-4b70-b8a2-d1cf01e904c1` | `READ`, encrypted, authenticated | Поточна IP-адреса Wi-Fi інтерфейсу |
+| WifiIpAddress | `4d42b2d3-35ba-4b70-b8a2-d1cf01e904c1` | `READ`, encrypted, authenticated | Поточна IP-адреса Wi-Fi інтерфейсу і mDNS hostname |
 | ApiAccessToken | `4d42b2d4-35ba-4b70-b8a2-d1cf01e904c1` | `READ`, encrypted, authenticated | Bearer token для HTTPS API |
 | LogNotifications | `4d42b2d5-35ba-4b70-b8a2-d1cf01e904c1` | `READ`, `NOTIFY`, encrypted, authenticated | BLE log notifications |
 
@@ -145,7 +145,7 @@ UUID сервісу:
 Після успішного запису контролер планує restart. Додаток має показати стан
 очікування, від'єднатися від BLE, зачекати reboot і повторно знайти пристрій.
 
-### Читання Wi-Fi IP address
+### Читання Wi-Fi IP address і hostname
 
 Прочитати characteristic:
 `4d42b2d3-35ba-4b70-b8a2-d1cf01e904c1`.
@@ -156,7 +156,9 @@ UUID сервісу:
 {
   "success": true,
   "data": {
-    "ipAddress": "192.168.1.42"
+    "ipAddress": "192.168.1.42",
+    "hostname": "watering-hub-a1b2c3",
+    "localHostname": "watering-hub-a1b2c3.local"
   },
   "error": null
 }
@@ -164,6 +166,10 @@ UUID сервісу:
 
 Якщо Wi-Fi ще не підключений, значення може бути `0.0.0.0`. Додаток повинен
 повторювати читання з паузою або просити користувача перевірити Wi-Fi settings.
+`hostname` генерується контролером з MAC-адреси і є стабільним для конкретного
+пристрою. `localHostname` можна використовувати для HTTPS API в локальній мережі,
+якщо mDNS підтримується мережею і мобільною платформою. Якщо mDNS не резолвиться,
+додаток має fallback на `ipAddress`.
 
 ### Читання API access token
 
@@ -869,15 +875,15 @@ Authorization: Bearer <mobile-session-token>
 5. Дочекатися `restartScheduled: true`.
 6. Від'єднатися і зачекати device reboot.
 7. Повторно підключитися через BLE.
-8. Опитувати `WifiIpAddress`, доки значення не стане відмінним від `0.0.0.0`.
+8. Опитувати `WifiIpAddress`, доки `ipAddress` не стане відмінним від `0.0.0.0`.
 9. Прочитати `ApiAccessToken`.
-10. Викликати `GET https://<ip>/api/settings` із bearer token.
+10. Викликати `GET https://<localHostname>/api/settings` із bearer token, якщо mDNS резолвиться; інакше використати `https://<ip>/api/settings`.
 11. Якщо cloud features увімкнені, викликати server `POST /api/mobile/push-tokens`
     і `PUT /api/mobile/devices/{deviceId}/log-push-subscription`.
 
 ### Звичайний запуск додатку
 
-1. Використати збережені `ipAddress` і `apiAccessToken`.
+1. Використати збережені `localHostname`, `ipAddress` і `apiAccessToken`.
 2. Спробувати `GET /api/settings`.
 3. Якщо підключення не вдалося, повторно підключитися через BLE і прочитати свіжий `WifiIpAddress`.
 4. Якщо авторизація завершується статусом `401`, повторно підключитися через BLE і прочитати

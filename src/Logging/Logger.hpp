@@ -30,6 +30,7 @@ private:
     static constexpr std::size_t SensorTypeCapacity = 32;
     static constexpr std::size_t SensorNameCapacity = 64;
     static constexpr std::size_t PayloadCapacity = 640;
+    static constexpr std::size_t FallbackBleNotificationChunkCapacity = 20;
     static constexpr uint8_t QueueLength = 24;
     static constexpr uint32_t WorkerStackSize = 4096;
     static constexpr const char *LogPath = "/logs";
@@ -69,6 +70,7 @@ private:
     static void worker(void *);
     static void deliver(const DeliveryItem &item);
     static void sendBleNotification(const char *payload);
+    static bool sendBleNotificationChunks(NimBLECharacteristic &characteristic, uint16_t connHandle, const char *payload, std::size_t chunkCapacity);
     static void sendHttpsNotification(char *payload, const char *path);
     static void formatPayload(const Record &record, char *payload, std::size_t capacity);
     static void formatPayload(const SensorReading &reading, char *payload, std::size_t capacity);

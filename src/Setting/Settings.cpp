@@ -1,6 +1,10 @@
 #include "Settings.hpp"
 
+#include <cstdio>
+#include <cstring>
+#include <esp_mac.h>
 #include <esp_system.h>
+#include "Logging/Logger.hpp"
 
 namespace
 {
@@ -44,6 +48,7 @@ constexpr char NAME_SUFFIX[] = "Name";
 constexpr char SOIL_SENSOR_SUFFIX[] = "Soil";
 constexpr char LITERS_PER_TICK_SUFFIX[] = "Lpt";
 constexpr char ADDRESS_SUFFIX[] = "Addr";
+constexpr char DEVICE_HOSTNAME_PREFIX[] = "watering-hub";
 }
 
 Settings::Settings()
@@ -56,7 +61,7 @@ void Settings::begin()
     bool storageAvailable = preferences.begin(STORAGE_NAMESPACE, true);
     if (!storageAvailable)
     {
-        ESP_LOGE("Settings", "Failed to open NVS namespace. Using hardcoded defaults where available");
+        Logger::e("Settings", "Failed to open NVS namespace. Using hardcoded defaults where available");
     }
 
     snapshot_.globalSettings.idleWaterCounterReadIntervalSeconds = readUInt(preferences, storageAvailable, IDLE_WATER_COUNTER_READ_INTERVAL_KEY, 5 * 60);
@@ -86,7 +91,7 @@ void Settings::begin()
         wateringWindowEndTime);
     if (!wateringStartMode.has_value())
     {
-        ESP_LOGE("Settings", "Invalid setting %s. Using hardcoded default", WATERING_START_MODE_KEY);
+        Logger::e("Settings", "Invalid setting %s. Using hardcoded default", WATERING_START_MODE_KEY);
         wateringStartMode = WateringStartMode::immediately();
     }
     snapshot_.globalSettings.wateringStartMode = wateringStartMode.value();
@@ -96,6 +101,7 @@ void Settings::begin()
 
     snapshot_.wifiSettings.ssid = readString(preferences, storageAvailable, WIFI_SSID_KEY, "").c_str();
     snapshot_.wifiSettings.password = readString(preferences, storageAvailable, WIFI_PASSWORD_KEY, "").c_str();
+    snapshot_.deviceHostname = generateDeviceHostname();
     snapshot_.apiAccessToken = readString(preferences, storageAvailable, API_ACCESS_TOKEN_KEY, "").c_str();
     snapshot_.remoteLogUrl = readString(preferences, storageAvailable, REMOTE_LOG_URL_KEY, "").c_str();
     snapshot_.remoteLogToken = readString(preferences, storageAvailable, REMOTE_LOG_TOKEN_KEY, "").c_str();
@@ -171,7 +177,7 @@ void Settings::begin()
         if (!writableStorageAvailable ||
             !putString(writablePreferences, API_ACCESS_TOKEN_KEY, snapshot_.apiAccessToken.c_str()))
         {
-            ESP_LOGE("Settings", "Failed to persist generated API access token");
+            Logger::e("Settings", "Failed to persist generated API access token");
         }
         if (writableStorageAvailable)
         {
@@ -321,6 +327,26 @@ bool Settings::saveWifiSettings(const WifiSettings &wifiSettings, String &error)
     return true;
 }
 
+std::string Settings::generateDeviceHostname()
+{
+    uint8_t mac[6] = {};
+    if (esp_efuse_mac_get_default(mac) != ESP_OK)
+    {
+        esp_fill_random(mac, sizeof(mac));
+    }
+
+    char hostname[32];
+    std::snprintf(
+        hostname,
+        sizeof(hostname),
+        "%s-%02x%02x%02x",
+        DEVICE_HOSTNAME_PREFIX,
+        mac[3],
+        mac[4],
+        mac[5]);
+    return hostname;
+}
+
 std::string Settings::generateApiAccessToken()
 {
     static constexpr char HEX_DIGITS[] = "0123456789abcdef";
@@ -341,7 +367,7 @@ uint32_t Settings::readUInt(Preferences &preferences, bool storageAvailable, con
 {
     if (!storageAvailable || !preferences.isKey(key))
     {
-        ESP_LOGW("Settings", "Missing setting %s. Using hardcoded default", key);
+        Logger::w("Settings", "Missing setting %s. Using hardcoded default", key);
         return defaultValue;
     }
     return preferences.getUInt(key, defaultValue);
@@ -351,7 +377,7 @@ uint8_t Settings::readUChar(Preferences &preferences, bool storageAvailable, con
 {
     if (!storageAvailable || !preferences.isKey(key))
     {
-        ESP_LOGW("Settings", "Missing setting %s. Using hardcoded default", key);
+        Logger::w("Settings", "Missing setting %s. Using hardcoded default", key);
         return defaultValue;
     }
     return preferences.getUChar(key, defaultValue);
@@ -362,14 +388,14 @@ uint8_t Settings::readCount(Preferences &preferences, bool storageAvailable, con
     static constexpr uint8_t MAX_SETTING_COUNT = 32;
     if (!storageAvailable || !preferences.isKey(key))
     {
-        ESP_LOGW("Settings", "Missing setting %s. Using hardcoded default", key);
+        Logger::w("Settings", "Missing setting %s. Using hardcoded default", key);
         return 0;
     }
 
     uint8_t value = preferences.getUChar(key);
     if (value > MAX_SETTING_COUNT)
     {
-        ESP_LOGW("Settings", "Invalid setting %s. Using hardcoded default", key);
+        Logger::w("Settings", "Invalid setting %s. Using hardcoded default", key);
         return 0;
     }
     return value;
@@ -379,7 +405,7 @@ float Settings::readFloat(Preferences &preferences, bool storageAvailable, const
 {
     if (!storageAvailable || !preferences.isKey(key))
     {
-        ESP_LOGW("Settings", "Missing setting %s. Using hardcoded default", key);
+        Logger::w("Settings", "Missing setting %s. Using hardcoded default", key);
         return defaultValue;
     }
     return preferences.getFloat(key, defaultValue);
@@ -389,7 +415,7 @@ String Settings::readString(Preferences &preferences, bool storageAvailable, con
 {
     if (!storageAvailable || !preferences.isKey(key))
     {
-        ESP_LOGW("Settings", "Missing setting %s. Using hardcoded default", key);
+        Logger::w("Settings", "Missing setting %s. Using hardcoded default", key);
         return defaultValue;
     }
     return preferences.getString(key, defaultValue);
