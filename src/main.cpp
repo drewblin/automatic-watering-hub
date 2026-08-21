@@ -71,6 +71,7 @@ void setup()
 
 void loop()
 {
+    wifiConnection->loop();
     systemClock.loop();
     apiServerBluetooth->loop();
     otaUpdateService->loop();

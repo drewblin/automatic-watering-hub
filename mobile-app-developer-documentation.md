@@ -167,9 +167,12 @@ UUID сервісу:
 Якщо Wi-Fi ще не підключений, значення може бути `0.0.0.0`. Додаток повинен
 повторювати читання з паузою або просити користувача перевірити Wi-Fi settings.
 `hostname` генерується контролером з MAC-адреси і є стабільним для конкретного
-пристрою. `localHostname` можна використовувати для HTTPS API в локальній мережі,
-якщо mDNS підтримується мережею і мобільною платформою. Якщо mDNS не резолвиться,
-додаток має fallback на `ipAddress`.
+пристрою. `localHostname` завжди є повним `.local` hostname для цього пристрою.
+
+Для Android не покладатися тільки на системний DNS resolver для `*.local`.
+Основний шлях discovery має бути DNS-SD resolve сервісу
+`_automatic-watering._tcp.`. Якщо DNS-SD або mDNS у мережі недоступні, додаток
+має fallback на `localHostname`, а потім на `ipAddress`.
 
 ### Читання API access token
 
@@ -218,6 +221,32 @@ https://<controller-ip>
 ```
 
 Порт за замовчуванням: `443`.
+
+### Local discovery через DNS-SD
+
+Після успішного Wi-Fi connect контролер запускає mDNS responder для `hostname`
+і реєструє DNS-SD service:
+
+```text
+type: _automatic-watering._tcp.
+instance name: <hostname>
+port: 443
+```
+
+TXT records:
+
+```text
+hostname=<hostname>
+localHostname=<hostname>.local
+api=https
+device=automatic-watering-hub
+```
+
+Мобільний додаток має спочатку виконати DNS-SD discovery/resolve сервісу
+`_automatic-watering._tcp.`. Resolve повинен повернути IP контролера і port
+`443`; для HTTPS API використовувати `https://<resolved-ip>/api/...` із bearer
+token. Якщо DNS-SD не спрацював, пробувати `https://<localHostname>/api/...`,
+після цього `https://<ipAddress>/api/...` з BLE response.
 
 Кожен запит повинен містити заголовки:
 
@@ -877,16 +906,23 @@ Authorization: Bearer <mobile-session-token>
 7. Повторно підключитися через BLE.
 8. Опитувати `WifiIpAddress`, доки `ipAddress` не стане відмінним від `0.0.0.0`.
 9. Прочитати `ApiAccessToken`.
-10. Викликати `GET https://<localHostname>/api/settings` із bearer token, якщо mDNS резолвиться; інакше використати `https://<ip>/api/settings`.
-11. Якщо cloud features увімкнені, викликати server `POST /api/mobile/push-tokens`
+10. Знайти і resolve DNS-SD service `_automatic-watering._tcp.` з instance name,
+    рівним `hostname`, і викликати `GET https://<resolved-ip>/api/settings` із
+    bearer token.
+11. Якщо DNS-SD не спрацював, спробувати `https://<localHostname>/api/settings`,
+    потім `https://<ipAddress>/api/settings`.
+12. Якщо cloud features увімкнені, викликати server `POST /api/mobile/push-tokens`
     і `PUT /api/mobile/devices/{deviceId}/log-push-subscription`.
 
 ### Звичайний запуск додатку
 
-1. Використати збережені `localHostname`, `ipAddress` і `apiAccessToken`.
-2. Спробувати `GET /api/settings`.
-3. Якщо підключення не вдалося, повторно підключитися через BLE і прочитати свіжий `WifiIpAddress`.
-4. Якщо авторизація завершується статусом `401`, повторно підключитися через BLE і прочитати
+1. Використати збережені `hostname`, `localHostname`, `ipAddress` і
+   `apiAccessToken`.
+2. Спочатку спробувати DNS-SD resolve `_automatic-watering._tcp.` для
+   `hostname`, потім `localHostname`, потім `ipAddress`.
+3. Викликати `GET /api/settings`.
+4. Якщо підключення не вдалося, повторно підключитися через BLE і прочитати свіжий `WifiIpAddress`.
+5. Якщо авторизація завершується статусом `401`, повторно підключитися через BLE і прочитати
    `ApiAccessToken` ще раз.
 
 ### Зміна налаштувань контролера

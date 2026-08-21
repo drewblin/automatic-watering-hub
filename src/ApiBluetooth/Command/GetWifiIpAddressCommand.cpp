@@ -12,6 +12,6 @@ ApiCommandResult GetWifiIpAddressCommand::execute()
     ApiCommandResult result(200, true);
     result.data["ipAddress"] = WiFi.localIP().toString();
     result.data["hostname"] = hostname_;
-    result.data["localHostname"] = hostname_.empty() ? "" : hostname_ + ".local";
+    result.data["localHostname"] = hostname_ + ".local";
     return result;
 }
