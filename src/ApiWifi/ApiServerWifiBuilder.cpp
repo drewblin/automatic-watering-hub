@@ -2,12 +2,12 @@
 
 #include <memory>
 
-#include "Command/ChangeDeviceAddressCommand.hpp"
 #include "Command/GetSensorMetricsCommand.hpp"
 #include "Command/GetSettingsCommand.hpp"
 #include "Command/SaveSettingsCommand.hpp"
 #include "Command/OpenValveForTimeCommand.hpp"
 #include "Command/ReadModbusRegisterCommand.hpp"
+#include "Command/WriteModbusRegisterCommand.hpp"
 
 ApiServerWifiBuilder::ApiServerWifiBuilder(
     ModbusMaster &modbusNode,
@@ -26,7 +26,7 @@ ApiServerWifiBuilder::ApiServerWifiBuilder(
 std::unique_ptr<ApiServerWifi> ApiServerWifiBuilder::build()
 {
     return std::make_unique<ApiServerWifi>(
-        ChangeDeviceAddressCommand(modbusNode_, modbusSerialPort_),
+        WriteModbusRegisterCommand(modbusNode_, modbusSerialPort_),
         ReadModbusRegisterCommand(modbusNode_, modbusSerialPort_),
         GetSettingsCommand(settingsSnapShot_, clock_),
         SaveSettingsCommand(settings_),

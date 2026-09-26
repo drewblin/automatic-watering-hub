@@ -3,19 +3,19 @@
 #include <memory>
 #include <string>
 #include "ArduinoJson.h"
-#include "Command/ChangeDeviceAddressCommand.hpp"
 #include "Command/GetSensorMetricsCommand.hpp"
 #include "Command/GetSettingsCommand.hpp"
 #include "Command/OpenValveForTimeCommand.hpp"
 #include "Command/ReadModbusRegisterCommand.hpp"
 #include "Command/SaveSettingsCommand.hpp"
+#include "Command/WriteModbusRegisterCommand.hpp"
 #include "esp_http_server.h"
 
 class ApiServerWifi
 {
 public:
     ApiServerWifi(
-        ChangeDeviceAddressCommand changeDeviceAddressCommand,
+        WriteModbusRegisterCommand writeModbusRegisterCommand,
         ReadModbusRegisterCommand readModbusRegisterCommand,
         GetSettingsCommand getSettingsCommand,
         SaveSettingsCommand saveSettingsCommand,
@@ -67,7 +67,7 @@ private:
         return handler();
     }
 
-    static esp_err_t handleChangeDeviceAddress(httpd_req_t *request);
+    static esp_err_t handleWriteModbusRegister(httpd_req_t *request);
     static esp_err_t handleReadModbusRegister(httpd_req_t *request);
     static esp_err_t handleOpenValveForTime(httpd_req_t *request);
     static esp_err_t handleGetSensorMetrics(httpd_req_t *request);
@@ -81,7 +81,7 @@ private:
     ApiCommandResult readRequestBody(httpd_req_t &request, String &payload) const;
     esp_err_t sendCommandResult(httpd_req_t &request, const ApiCommandResult &result) const;
 
-    ChangeDeviceAddressCommand changeDeviceAddressCommand_;
+    WriteModbusRegisterCommand writeModbusRegisterCommand_;
     ReadModbusRegisterCommand readModbusRegisterCommand_;
     GetSettingsCommand getSettingsCommand_;
     SaveSettingsCommand saveSettingsCommand_;

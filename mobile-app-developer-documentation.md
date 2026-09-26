@@ -583,37 +583,25 @@ Content-Type: application/json
   `settings.globalSettings.maximumManualValveOpenTimeSeconds`;
 - якщо valve з таким pin не існує, відповідь має статус `404 Not Found`.
 
-### POST /api/modbus/device-address
+### POST /api/modbus/register/save
 
-Змінює Modbus slave address пристрою.
+Записує одне значення в Modbus holding register за допомогою функції `0x06`.
 
 Запит:
 
 ```http
-POST /api/modbus/device-address
+POST /api/modbus/register/save
 Authorization: Bearer <apiAccessToken>
 Content-Type: application/json
 ```
 
-Тіло запиту без save register:
+Тіло запиту:
 
 ```json
 {
-  "currentAddress": 1,
-  "newAddress": 2,
-  "registerAddress": 256
-}
-```
-
-Тіло запиту із save register:
-
-```json
-{
-  "currentAddress": 1,
-  "newAddress": 2,
-  "registerAddress": 256,
-  "saveRegisterAddress": 512,
-  "saveValue": 1
+  "slaveAddress": 1,
+  "registerAddress": 0,
+  "value": 2
 }
 ```
 
@@ -624,12 +612,9 @@ Content-Type: application/json
   "success": true,
   "data": {
     "status": 0,
-    "currentAddress": 1,
-    "newAddress": 2,
-    "registerAddress": 256,
-    "save": true,
-    "saveRegisterAddress": 512,
-    "saveValue": 1
+    "slaveAddress": 1,
+    "registerAddress": 0,
+    "value": 2
   },
   "error": null
 }
@@ -637,11 +622,10 @@ Content-Type: application/json
 
 Валідація:
 
-- `currentAddress` і `newAddress` мають тип uint8;
-- `registerAddress`, `saveRegisterAddress`, `saveValue` мають тип uint16;
-- `saveRegisterAddress` і `saveValue` треба передавати разом;
+- `slaveAddress` має тип uint8;
+- `registerAddress` і `value` мають тип uint16;
 - non-zero Modbus status повертає `502` як internal result і
-  `error: "Failed to change device address"`.
+  `error: "Failed to write Modbus register"`.
 
 Примітка: поточна firmware мапить невідомий status `502` у HTTP
 `500 Internal Server Error` у status line відповіді, але JSON усе одно містить

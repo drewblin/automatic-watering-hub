@@ -7,13 +7,13 @@
 #include "esp_https_server.h"
 
 ApiServerWifi::ApiServerWifi(
-    ChangeDeviceAddressCommand changeDeviceAddressCommand,
+    WriteModbusRegisterCommand writeModbusRegisterCommand,
     ReadModbusRegisterCommand readModbusRegisterCommand,
     GetSettingsCommand getSettingsCommand,
     SaveSettingsCommand saveSettingsCommand,
     const std::string &apiAccessToken,
     uint16_t port)
-    : changeDeviceAddressCommand_(changeDeviceAddressCommand),
+    : writeModbusRegisterCommand_(writeModbusRegisterCommand),
       readModbusRegisterCommand_(readModbusRegisterCommand),
       getSettingsCommand_(getSettingsCommand),
       saveSettingsCommand_(saveSettingsCommand),
@@ -52,12 +52,12 @@ void ApiServerWifi::begin()
     }
     httpd_register_err_handler(server_, HTTPD_404_NOT_FOUND, handleNotFound);
 
-    httpd_uri_t changeDeviceAddress = {
-        .uri = "/api/modbus/device-address",
+    httpd_uri_t writeModbusRegister = {
+        .uri = "/api/modbus/register/save",
         .method = HTTP_POST,
-        .handler = handleChangeDeviceAddress,
+        .handler = handleWriteModbusRegister,
         .user_ctx = this};
-    httpd_register_uri_handler(server_, &changeDeviceAddress);
+    httpd_register_uri_handler(server_, &writeModbusRegister);
 
     httpd_uri_t readModbusRegister = {
         .uri = "/api/modbus/register/get",
@@ -171,12 +171,12 @@ ApiCommandResult ApiServerWifi::readRequestBody(httpd_req_t &request, String &pa
     return ApiCommandResult(200, true);
 }
 
-esp_err_t ApiServerWifi::handleChangeDeviceAddress(httpd_req_t *request)
+esp_err_t ApiServerWifi::handleWriteModbusRegister(httpd_req_t *request)
 {
     ApiServerWifi *server = static_cast<ApiServerWifi *>(request->user_ctx);
     return server->authorizeAndHandle(*request, [&]()
     {
-        return server->sendCommandResult(*request, server->execute(server->changeDeviceAddressCommand_, *request));
+        return server->sendCommandResult(*request, server->execute(server->writeModbusRegisterCommand_, *request));
     });
 }
 
