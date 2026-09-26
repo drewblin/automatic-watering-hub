@@ -209,7 +209,9 @@ ESP32.
 - [Документація для розробника мобільного додатку](mobile-app-developer-documentation.md)
 - [Документація для розробника сервера](server-developer-documentation.md)
 
-## Потенційні задачі
+## Перелік задач
+
+Усього в переліку 17 задач: 15 поточних і 2 відкладені на невизначений термін.
 
 - [Режим суперекономії та кнопка Wi-Fi/BLE](tasks/01-ble-config-button.md)
 - [Light sleep контролера](tasks/02-controller-light-sleep.md)
@@ -217,6 +219,21 @@ ESP32.
 - [WiFi-команда закриття всіх клапанів](tasks/05-wifi-close-all-valves-command.md)
 - [Водяні лічильники і wake-up](tasks/06-water-counters-wakeup.md)
 - [Валідація GPIO для реле та датчиків протоку](tasks/07-gpio-validation.md)
+- [Реле головного клапана або насоса](tasks/08-master-valve-pump-relay.md)
+- [Два входи сухого контакту](tasks/09-two-dry-contact-inputs.md)
+- [Свіжість показів ґрунту та реакція на збій датчика](tasks/10-soil-sensor-freshness-fail-safe.md)
+- [Захист поливу за тиском із можливістю вимкнення під час налаштування](tasks/11-pressure-protection.md)
+- [Окремі параметри автоматичного поливу для кожної зони](tasks/12-per-zone-watering-settings.md)
+- [Окремий графік автоматичного поливу для кожної зони](tasks/13-per-zone-watering-schedules.md)
+- [Полив зони без датчика вологості лише за розкладом](tasks/14-sensorless-scheduled-watering.md)
+- [Ліміт літрів на один автоматичний полив зони](tasks/15-per-zone-water-volume-limit.md)
+- [Історія поливів і звіти за зонами](tasks/17-watering-history-by-zone.md)
+- [Надійна доставка аварійних повідомлень](tasks/18-reliable-alert-delivery.md)
+
+### Відкладено на невизначений термін
+
+- [98 — врахування погоди й коригування тривалості поливу](tasks/98-weather-aware-watering.md)
+- [99 — аварійний захист за витратою води](tasks/99-flow-anomaly-shutdown.md)
 
 ## Статус проекту
 
