@@ -1,6 +1,7 @@
 #include "ChangeDeviceAddressCommand.hpp"
 
 #include "Api/JsonRequestReader.hpp"
+#include "Modbus/ModbusBusLock.hpp"
 
 ChangeDeviceAddressCommand::ChangeDeviceAddressCommand(
     ModbusMaster &modbusNode,
@@ -67,6 +68,8 @@ uint8_t ChangeDeviceAddressCommand::execute(
     uint16_t saveRegisterAddress,
     uint16_t saveValue)
 {
+    ModbusBusLock lock;
+
     modbusNode_.begin(currentAddress, serialPort_);
     uint8_t status = modbusNode_.writeSingleRegister(registerAddress, newAddress);
     if (status != SuccessStatus || !save)

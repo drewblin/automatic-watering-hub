@@ -67,6 +67,14 @@ void setup()
 
     apiServerBluetooth->begin();
     apiServerWifi->begin();
+
+    Serial.println();
+    Serial.print("Hostname: ");
+    Serial.println(settingsSnapshot.deviceHostname.c_str());
+    Serial.print("WiFi SSID: ");
+    Serial.println(settingsSnapshot.wifiSettings.ssid.c_str());
+    Serial.print("API access token: ");
+    Serial.println(settingsSnapshot.apiAccessToken.c_str());
 }
 
 void loop()

@@ -647,6 +647,52 @@ Content-Type: application/json
 `500 Internal Server Error` у status line відповіді, але JSON усе одно містить
 Modbus `status` і `success: false`.
 
+### POST /api/modbus/register/get
+
+Читає Modbus holding register-и пристрою.
+
+Запит:
+
+```http
+POST /api/modbus/register/get
+Authorization: Bearer <apiAccessToken>
+Content-Type: application/json
+```
+
+Тіло запиту:
+
+```json
+{
+  "slaveAddress": 1,
+  "registerAddress": 0,
+  "quantity": 2
+}
+```
+
+Відповідь:
+
+```json
+{
+  "success": true,
+  "data": {
+    "status": 0,
+    "slaveAddress": 1,
+    "registerAddress": 0,
+    "quantity": 2,
+    "values": [123, 456]
+  },
+  "error": null
+}
+```
+
+Валідація:
+
+- `slaveAddress` має тип uint8;
+- `registerAddress` і `quantity` мають тип uint16;
+- `quantity` має бути `1..64`;
+- non-zero Modbus status повертає `502 Bad Gateway` і
+  `error: "Failed to read Modbus register"`.
+
 ## Server API для мобільного додатку
 
 Цей API реалізується backend-сервером. Він потрібен для:

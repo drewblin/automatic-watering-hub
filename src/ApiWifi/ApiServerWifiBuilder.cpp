@@ -7,6 +7,7 @@
 #include "Command/GetSettingsCommand.hpp"
 #include "Command/SaveSettingsCommand.hpp"
 #include "Command/OpenValveForTimeCommand.hpp"
+#include "Command/ReadModbusRegisterCommand.hpp"
 
 ApiServerWifiBuilder::ApiServerWifiBuilder(
     ModbusMaster &modbusNode,
@@ -26,6 +27,7 @@ std::unique_ptr<ApiServerWifi> ApiServerWifiBuilder::build()
 {
     return std::make_unique<ApiServerWifi>(
         ChangeDeviceAddressCommand(modbusNode_, modbusSerialPort_),
+        ReadModbusRegisterCommand(modbusNode_, modbusSerialPort_),
         GetSettingsCommand(settingsSnapShot_, clock_),
         SaveSettingsCommand(settings_),
         settingsSnapShot_.apiAccessToken);

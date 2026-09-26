@@ -7,6 +7,7 @@
 #include "Command/GetSensorMetricsCommand.hpp"
 #include "Command/GetSettingsCommand.hpp"
 #include "Command/OpenValveForTimeCommand.hpp"
+#include "Command/ReadModbusRegisterCommand.hpp"
 #include "Command/SaveSettingsCommand.hpp"
 #include "esp_http_server.h"
 
@@ -15,6 +16,7 @@ class ApiServerWifi
 public:
     ApiServerWifi(
         ChangeDeviceAddressCommand changeDeviceAddressCommand,
+        ReadModbusRegisterCommand readModbusRegisterCommand,
         GetSettingsCommand getSettingsCommand,
         SaveSettingsCommand saveSettingsCommand,
         const std::string &apiAccessToken,
@@ -66,6 +68,7 @@ private:
     }
 
     static esp_err_t handleChangeDeviceAddress(httpd_req_t *request);
+    static esp_err_t handleReadModbusRegister(httpd_req_t *request);
     static esp_err_t handleOpenValveForTime(httpd_req_t *request);
     static esp_err_t handleGetSensorMetrics(httpd_req_t *request);
     static esp_err_t handleGetSettings(httpd_req_t *request);
@@ -79,6 +82,7 @@ private:
     esp_err_t sendCommandResult(httpd_req_t &request, const ApiCommandResult &result) const;
 
     ChangeDeviceAddressCommand changeDeviceAddressCommand_;
+    ReadModbusRegisterCommand readModbusRegisterCommand_;
     GetSettingsCommand getSettingsCommand_;
     SaveSettingsCommand saveSettingsCommand_;
     std::unique_ptr<OpenValveForTimeCommand> openValveForTimeCommand_;

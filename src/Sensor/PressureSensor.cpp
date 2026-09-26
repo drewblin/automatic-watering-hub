@@ -1,6 +1,7 @@
 #include "PressureSensor.hpp"
 #include <stdint.h>
 #include "Logging/Logger.hpp"
+#include "Modbus/ModbusBusLock.hpp"
 
 PressureSensor::PressureSensor(
     ModbusMaster &modbusNode,
@@ -26,9 +27,22 @@ void PressureSensor::readPressureIfDue(uint32_t currentTimeMs)
 
 void PressureSensor::readPressure()
 {
-    modbusNode_.begin(setting_.getSlaveAddress(), serialPort_);
+    uint8_t result = modbusNode_.ku8MBSuccess;
+    uint16_t unit = 0;
+    uint16_t decimal = 0;
+    int16_t pressureRaw = 0;
+    {
+        ModbusBusLock lock;
+        modbusNode_.begin(setting_.getSlaveAddress(), serialPort_);
+        result = modbusNode_.readHoldingRegisters(0x0002, 3);
+        if (result == modbusNode_.ku8MBSuccess)
+        {
+            unit = modbusNode_.getResponseBuffer(0);
+            decimal = modbusNode_.getResponseBuffer(1);
+            pressureRaw = (int16_t)modbusNode_.getResponseBuffer(2);
+        }
+    }
 
-    uint8_t result = modbusNode_.readHoldingRegisters(0x0002, 3);
     if (result != modbusNode_.ku8MBSuccess)
     {
         Logger::e(
@@ -41,10 +55,6 @@ void PressureSensor::readPressure()
         Logger::sendSensorReading(setting_.getSlaveAddress(), "pressure", setting_.getName().c_str(), lastReadPressure_);
         return;
     }
-
-    uint16_t unit = modbusNode_.getResponseBuffer(0);
-    uint16_t decimal = modbusNode_.getResponseBuffer(1);
-    int16_t pressureRaw = (int16_t)modbusNode_.getResponseBuffer(2);
 
     lastReadPressure_ = convertToBar(pressureRaw / powf(10, decimal), unit);
     Logger::sendSensorReading(setting_.getSlaveAddress(), "pressure", setting_.getName().c_str(), lastReadPressure_);

@@ -25,6 +25,8 @@ struct ApiCommandResult
             return "413 Content Too Large";
         case 500:
             return "500 Internal Server Error";
+        case 502:
+            return "502 Bad Gateway";
         case 503:
             return "503 Service Unavailable";
         default:

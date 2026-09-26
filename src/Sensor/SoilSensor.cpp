@@ -1,6 +1,7 @@
 #include "SoilSensor.hpp"
 #include <stdint.h>
 #include "Logging/Logger.hpp"
+#include "Modbus/ModbusBusLock.hpp"
 
 SoilSensor::SoilSensor(
     ModbusMaster &modbusNode,
@@ -26,9 +27,20 @@ void SoilSensor::readDataIfDue(uint32_t currentTimeMs)
 
 void SoilSensor::readData()
 {
-    modbusNode_.begin(setting_.getSlaveAddress(), serialPort_);
+    uint8_t result = modbusNode_.ku8MBSuccess;
+    int16_t temperatureRaw = 0;
+    uint16_t humidityRaw = 0;
+    {
+        ModbusBusLock lock;
+        modbusNode_.begin(setting_.getSlaveAddress(), serialPort_);
+        result = modbusNode_.readHoldingRegisters(0x0000, 2);
+        if (result == modbusNode_.ku8MBSuccess)
+        {
+            temperatureRaw = (int16_t)modbusNode_.getResponseBuffer(0);
+            humidityRaw = modbusNode_.getResponseBuffer(1);
+        }
+    }
 
-    uint8_t result = modbusNode_.readHoldingRegisters(0x0000, 2);
     if (result != modbusNode_.ku8MBSuccess)
     {
         Logger::e(
@@ -44,9 +56,6 @@ void SoilSensor::readData()
 
         return;
     }
-
-    int16_t temperatureRaw = (int16_t)modbusNode_.getResponseBuffer(0);
-    uint16_t humidityRaw = modbusNode_.getResponseBuffer(1);
 
     lastReadTemperature_ = temperatureRaw / 10.0f;
     lastReadHumidity_ = humidityRaw / 10.0f;

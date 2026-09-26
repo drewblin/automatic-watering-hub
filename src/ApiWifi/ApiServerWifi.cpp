@@ -8,11 +8,13 @@
 
 ApiServerWifi::ApiServerWifi(
     ChangeDeviceAddressCommand changeDeviceAddressCommand,
+    ReadModbusRegisterCommand readModbusRegisterCommand,
     GetSettingsCommand getSettingsCommand,
     SaveSettingsCommand saveSettingsCommand,
     const std::string &apiAccessToken,
     uint16_t port)
     : changeDeviceAddressCommand_(changeDeviceAddressCommand),
+      readModbusRegisterCommand_(readModbusRegisterCommand),
       getSettingsCommand_(getSettingsCommand),
       saveSettingsCommand_(saveSettingsCommand),
       apiAccessToken_(apiAccessToken),
@@ -56,6 +58,13 @@ void ApiServerWifi::begin()
         .handler = handleChangeDeviceAddress,
         .user_ctx = this};
     httpd_register_uri_handler(server_, &changeDeviceAddress);
+
+    httpd_uri_t readModbusRegister = {
+        .uri = "/api/modbus/register/get",
+        .method = HTTP_POST,
+        .handler = handleReadModbusRegister,
+        .user_ctx = this};
+    httpd_register_uri_handler(server_, &readModbusRegister);
 
     httpd_uri_t getSettings = {
         .uri = "/api/settings",
@@ -168,6 +177,15 @@ esp_err_t ApiServerWifi::handleChangeDeviceAddress(httpd_req_t *request)
     return server->authorizeAndHandle(*request, [&]()
     {
         return server->sendCommandResult(*request, server->execute(server->changeDeviceAddressCommand_, *request));
+    });
+}
+
+esp_err_t ApiServerWifi::handleReadModbusRegister(httpd_req_t *request)
+{
+    ApiServerWifi *server = static_cast<ApiServerWifi *>(request->user_ctx);
+    return server->authorizeAndHandle(*request, [&]()
+    {
+        return server->sendCommandResult(*request, server->execute(server->readModbusRegisterCommand_, *request));
     });
 }
 
