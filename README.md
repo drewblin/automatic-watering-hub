@@ -214,9 +214,9 @@ ESP32.
 - [Режим суперекономії та кнопка Wi-Fi/BLE](tasks/01-ble-config-button.md)
 - [Light sleep контролера](tasks/02-controller-light-sleep.md)
 - [Живлення Modbus-датчиків і RS485](tasks/03-modbus-sensors-rs485-power.md)
-- [Клапани і реле](tasks/04-valves-and-relays-power.md)
 - [WiFi-команда закриття всіх клапанів](tasks/05-wifi-close-all-valves-command.md)
 - [Водяні лічильники і wake-up](tasks/06-water-counters-wakeup.md)
+- [Валідація GPIO для реле та датчиків протоку](tasks/07-gpio-validation.md)
 
 ## Статус проекту
 
