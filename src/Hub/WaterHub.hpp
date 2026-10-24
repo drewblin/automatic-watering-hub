@@ -6,13 +6,14 @@
 #include "Sensor/WaterCounter.hpp"
 #include "Sensor/PressureSensor.hpp"
 #include "Sensor/SoilSensor.hpp"
+#include "Modbus/ModbusSensorPower.hpp"
 #include "Setting/GlobalSettings.hpp"
 #include "Valve/Valve.hpp"
 
 class WaterHub
 {
 public:
-    explicit WaterHub(const GlobalSettings &globalSettings);
+    WaterHub(const GlobalSettings &globalSettings, ModbusSensorPower &modbusSensorPower);
 
     void setMagistralWaterCounter(std::unique_ptr<WaterCounter> counter);
     void setPressureSensor(std::unique_ptr<PressureSensor> sensor);
@@ -30,6 +31,10 @@ public:
     SoilSensor *getSoilSensorForValve(const Valve *valve) const;
 
     bool hasOpenValve() const;
+    void openValve(Valve &valve);
+    void openValveForTime(Valve &valve, uint32_t seconds);
+    void closeValve(Valve &valve);
+    void closeExpiredValves(uint32_t currentTimeMs);
     void closeAllValves();
 
 private:
@@ -43,8 +48,12 @@ private:
     std::unordered_map<const Valve *, SoilSensor *> valveToSoilSensorMap_;
 
     GlobalSettings globalSettings_;
+    ModbusSensorPower &modbusSensorPower_;
     bool sensorReadIntervalsUseWateringMode_ = false;
 
+    bool hasOpenValveUnlocked() const;
+    void syncWateringPower();
+    bool hasDueModbusSensor(uint32_t currentTimeMs) const;
     void updateSensorReadIntervals();
     void readWaterCounters(uint32_t currentTimeMs);
     void readPressureSensor(uint32_t currentTimeMs);

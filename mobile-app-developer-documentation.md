@@ -289,6 +289,7 @@ Authorization: Bearer <apiAccessToken>
         "wateringPressureSensorReadIntervalSeconds": 5,
         "idleSoilSensorReadIntervalSeconds": 3600,
         "wateringSoilSensorReadIntervalSeconds": 60,
+        "modbusWarmupMs": 0,
         "maximumManualValveOpenTimeSeconds": 3600,
         "startWateringBelowHumidityPercent": 20,
         "stopWateringAboveHumidityPercent": 80,
@@ -366,6 +367,7 @@ Content-Type: application/json
     "wateringPressureSensorReadIntervalSeconds": 5,
     "idleSoilSensorReadIntervalSeconds": 3600,
     "wateringSoilSensorReadIntervalSeconds": 60,
+    "modbusWarmupMs": 2000,
     "maximumManualValveOpenTimeSeconds": 3600,
     "startWateringBelowHumidityPercent": 20,
     "stopWateringAboveHumidityPercent": 80,
@@ -455,6 +457,9 @@ Content-Type: application/json
   `soilSensorSlaveAddress`;
 - GPIO pins мають бути унікальними для клапанів, магістрального лічильника води
   і додаткових лічильників води;
+- `modbusWarmupMs` задає спільний час прогріву Modbus-датчиків у діапазоні
+  `0..60000` мс. Поле необов'язкове в `PUT /api/settings`; якщо його немає,
+  зберігається значення `0`;
 - `litersPerTick` має бути додатним скінченним числом.
 
 `remoteLogSettings.url` - базовий server URL, на який контролер відправляє

@@ -1,26 +1,32 @@
 #include "PressureSensor.hpp"
 #include <stdint.h>
 #include "Logging/Logger.hpp"
-#include "Modbus/ModbusBusLock.hpp"
+#include "Modbus/ModbusTransaction.hpp"
 
 PressureSensor::PressureSensor(
     ModbusMaster &modbusNode,
     HardwareSerial &serialPort,
+    ModbusSensorPower &power,
     const PressureSensorSetting &setting,
     uint32_t readIntervalSeconds) : modbusNode_(modbusNode),
                                     serialPort_(serialPort),
+                                    power_(power),
                                     setting_(setting),
                                     readIntervalSeconds_(readIntervalSeconds)
 {
 }
 
+bool PressureSensor::isReadDue(uint32_t currentTimeMs) const
+{
+    return currentTimeMs - lastReadTimeMs_ >= readIntervalSeconds_ * 1000;
+}
+
 void PressureSensor::readPressureIfDue(uint32_t currentTimeMs)
 {
-    if (currentTimeMs - lastReadTimeMs_ < readIntervalSeconds_ * 1000)
+    if (!isReadDue(currentTimeMs))
     {
         return;
     }
-
     lastReadTimeMs_ = currentTimeMs;
     readPressure();
 }
@@ -32,7 +38,7 @@ void PressureSensor::readPressure()
     uint16_t decimal = 0;
     int16_t pressureRaw = 0;
     {
-        ModbusBusLock lock;
+        ModbusTransaction transaction(power_);
         modbusNode_.begin(setting_.getSlaveAddress(), serialPort_);
         result = modbusNode_.readHoldingRegisters(0x0002, 3);
         if (result == modbusNode_.ku8MBSuccess)

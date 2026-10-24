@@ -1,7 +1,27 @@
 #include "WaterHub.hpp"
 
-WaterHub::WaterHub(const GlobalSettings &globalSettings)
-    : globalSettings_(globalSettings)
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
+
+namespace
+{
+SemaphoreHandle_t valveMutex()
+{
+    static SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
+    configASSERT(mutex != nullptr);
+    return mutex;
+}
+
+class ValveStateLock
+{
+public:
+    ValveStateLock() { xSemaphoreTake(valveMutex(), portMAX_DELAY); }
+    ~ValveStateLock() { xSemaphoreGive(valveMutex()); }
+};
+}
+
+WaterHub::WaterHub(const GlobalSettings &globalSettings, ModbusSensorPower &modbusSensorPower)
+    : globalSettings_(globalSettings), modbusSensorPower_(modbusSensorPower)
 {
 }
 
@@ -33,12 +53,15 @@ void WaterHub::addValve(std::unique_ptr<Valve> valve, SoilSensor *sensor)
 
 void WaterHub::loop()
 {
-    uint32_t currentTimeMs = millis();
+    const uint32_t currentTimeMs = millis();
 
+    syncWateringPower();
     updateSensorReadIntervals();
+    readWaterCounters(currentTimeMs);
+
+    modbusSensorPower_.setScheduledReadActive(hasDueModbusSensor(currentTimeMs));
     readPressureSensor(currentTimeMs);
     readSoilSensors(currentTimeMs);
-    readWaterCounters(currentTimeMs);
 }
 
 const WaterCounter *WaterHub::getMagistralWaterCounter() const
@@ -133,7 +156,8 @@ void WaterHub::readWaterCounters(uint32_t currentTimeMs)
 
 void WaterHub::readPressureSensor(uint32_t currentTimeMs)
 {
-    if (pressureSensor_ != nullptr)
+    if (pressureSensor_ != nullptr &&
+        modbusSensorPower_.isReady())
     {
         pressureSensor_->readPressureIfDue(currentTimeMs);
     }
@@ -141,15 +165,26 @@ void WaterHub::readPressureSensor(uint32_t currentTimeMs)
 
 void WaterHub::readSoilSensors(uint32_t currentTimeMs)
 {
-    for (size_t i = 0; i < soilSensors_.size(); ++i)
+    if (!modbusSensorPower_.isReady())
     {
-        soilSensors_[i]->readDataIfDue(currentTimeMs);
+        return;
+    }
+
+    for (const auto &sensor : soilSensors_)
+    {
+        sensor->readDataIfDue(currentTimeMs);
     }
 }
 
 bool WaterHub::hasOpenValve() const
 {
-    for (const auto &valve : getValves())
+    ValveStateLock lock;
+    return hasOpenValveUnlocked();
+}
+
+bool WaterHub::hasOpenValveUnlocked() const
+{
+    for (const auto &valve : valves_)
     {
         if (valve->isOpen())
         {
@@ -160,8 +195,63 @@ bool WaterHub::hasOpenValve() const
     return false;
 }
 
+void WaterHub::syncWateringPower()
+{
+    ValveStateLock lock;
+    modbusSensorPower_.setWateringActive(hasOpenValveUnlocked());
+}
+
+bool WaterHub::hasDueModbusSensor(uint32_t currentTimeMs) const
+{
+    if (pressureSensor_ != nullptr && pressureSensor_->isReadDue(currentTimeMs))
+    {
+        return true;
+    }
+    for (const auto &sensor : soilSensors_)
+    {
+        if (sensor->isReadDue(currentTimeMs))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void WaterHub::openValve(Valve &valve)
+{
+    ValveStateLock lock;
+    modbusSensorPower_.setWateringActive(true);
+    valve.open();
+}
+
+void WaterHub::openValveForTime(Valve &valve, uint32_t seconds)
+{
+    ValveStateLock lock;
+    modbusSensorPower_.setWateringActive(true);
+    valve.openForTime(seconds);
+}
+
+void WaterHub::closeValve(Valve &valve)
+{
+    ValveStateLock lock;
+    valve.close();
+}
+
+void WaterHub::closeExpiredValves(uint32_t currentTimeMs)
+{
+    ValveStateLock lock;
+    for (const auto &valve : valves_)
+    {
+        if (valve->isOpenExpired(currentTimeMs))
+        {
+            valve->close();
+        }
+    }
+}
+
 void WaterHub::closeAllValves()
 {
+    ValveStateLock lock;
     for (const auto &valve : valves_)
     {
         valve->close();

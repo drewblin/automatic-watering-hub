@@ -16,6 +16,7 @@ constexpr char IDLE_PRESSURE_SENSOR_READ_INTERVAL_KEY[] = "iPrRead";
 constexpr char WATERING_PRESSURE_SENSOR_READ_INTERVAL_KEY[] = "wPrRead";
 constexpr char IDLE_SOIL_SENSOR_READ_INTERVAL_KEY[] = "iSoilRead";
 constexpr char WATERING_SOIL_SENSOR_READ_INTERVAL_KEY[] = "wSoilRead";
+constexpr char MODBUS_WARMUP_KEY[] = "modbusWarmMs";
 constexpr char MAXIMUM_MANUAL_VALVE_OPEN_TIME_KEY[] = "maxManual";
 constexpr char START_WATERING_BELOW_HUMIDITY_KEY[] = "humidStart";
 constexpr char STOP_WATERING_ABOVE_HUMIDITY_KEY[] = "humidStop";
@@ -70,6 +71,7 @@ void Settings::begin()
     snapshot_.globalSettings.wateringPressureSensorReadIntervalSeconds = readUInt(preferences, storageAvailable, WATERING_PRESSURE_SENSOR_READ_INTERVAL_KEY, 5);
     snapshot_.globalSettings.idleSoilSensorReadIntervalSeconds = readUInt(preferences, storageAvailable, IDLE_SOIL_SENSOR_READ_INTERVAL_KEY, 60 * 60);
     snapshot_.globalSettings.wateringSoilSensorReadIntervalSeconds = readUInt(preferences, storageAvailable, WATERING_SOIL_SENSOR_READ_INTERVAL_KEY, 1 * 60);
+    snapshot_.globalSettings.modbusWarmupMs = readUInt(preferences, storageAvailable, MODBUS_WARMUP_KEY, 0);
     snapshot_.globalSettings.maximumManualValveOpenTimeSeconds = readUInt(preferences, storageAvailable, MAXIMUM_MANUAL_VALVE_OPEN_TIME_KEY, 3600);
     snapshot_.globalSettings.startWateringBelowHumidityPercent = readUChar(preferences, storageAvailable, START_WATERING_BELOW_HUMIDITY_KEY, 20);
     snapshot_.globalSettings.stopWateringAboveHumidityPercent = readUChar(preferences, storageAvailable, STOP_WATERING_ABOVE_HUMIDITY_KEY, 80);
@@ -206,6 +208,7 @@ bool Settings::save(const SettingsSnapshot &snapshot, String &error)
         preferences.putUInt(WATERING_PRESSURE_SENSOR_READ_INTERVAL_KEY, snapshot.globalSettings.wateringPressureSensorReadIntervalSeconds) > 0 &&
         preferences.putUInt(IDLE_SOIL_SENSOR_READ_INTERVAL_KEY, snapshot.globalSettings.idleSoilSensorReadIntervalSeconds) > 0 &&
         preferences.putUInt(WATERING_SOIL_SENSOR_READ_INTERVAL_KEY, snapshot.globalSettings.wateringSoilSensorReadIntervalSeconds) > 0 &&
+        preferences.putUInt(MODBUS_WARMUP_KEY, snapshot.globalSettings.modbusWarmupMs) > 0 &&
         preferences.putUInt(MAXIMUM_MANUAL_VALVE_OPEN_TIME_KEY, snapshot.globalSettings.maximumManualValveOpenTimeSeconds) > 0 &&
         preferences.putUChar(START_WATERING_BELOW_HUMIDITY_KEY, snapshot.globalSettings.startWateringBelowHumidityPercent) > 0 &&
         preferences.putUChar(STOP_WATERING_ABOVE_HUMIDITY_KEY, snapshot.globalSettings.stopWateringAboveHumidityPercent) > 0 &&

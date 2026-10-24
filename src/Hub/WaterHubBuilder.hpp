@@ -6,10 +6,12 @@ class WaterHubBuilder
 public:
     WaterHubBuilder(
         ModbusMaster &modbusNode,
-        HardwareSerial &modbusSerialPort);
+        HardwareSerial &modbusSerialPort,
+        ModbusSensorPower &modbusSensorPower);
     WaterHub build(const SettingsSnapshot &settings);
 
 private:
     ModbusMaster &modbusNode_;
     HardwareSerial &modbusSerialPort_;
+    ModbusSensorPower &modbusSensorPower_;
 };

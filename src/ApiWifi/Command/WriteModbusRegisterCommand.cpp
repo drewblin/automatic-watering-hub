@@ -1,13 +1,15 @@
 #include "WriteModbusRegisterCommand.hpp"
 
 #include "Api/JsonRequestReader.hpp"
-#include "Modbus/ModbusBusLock.hpp"
+#include "Modbus/ModbusTransaction.hpp"
 
 WriteModbusRegisterCommand::WriteModbusRegisterCommand(
     ModbusMaster &modbusNode,
-    HardwareSerial &serialPort)
+    HardwareSerial &serialPort,
+    ModbusSensorPower &power)
     : modbusNode_(modbusNode),
-      serialPort_(serialPort)
+      serialPort_(serialPort),
+      power_(power)
 {
 }
 
@@ -27,7 +29,7 @@ ApiCommandResult WriteModbusRegisterCommand::execute(const JsonDocument &request
 
     uint8_t status;
     {
-        ModbusBusLock lock;
+        ModbusTransaction transaction(power_);
         modbusNode_.begin(slaveAddress, serialPort_);
         status = modbusNode_.writeSingleRegister(registerAddress, value);
     }

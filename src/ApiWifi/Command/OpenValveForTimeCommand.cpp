@@ -47,7 +47,7 @@ bool OpenValveForTimeCommand::execute(uint8_t pin, uint32_t seconds)
             continue;
         }
 
-        valve->openForTime(seconds);
+        waterHub_.openValveForTime(*valve, seconds);
         return true;
     }
 

@@ -5,15 +5,17 @@
 
 WaterHubBuilder::WaterHubBuilder(
     ModbusMaster &modbusNode,
-    HardwareSerial &modbusSerialPort) : modbusNode_(modbusNode),
-                                        modbusSerialPort_(modbusSerialPort)
+    HardwareSerial &modbusSerialPort,
+    ModbusSensorPower &modbusSensorPower) : modbusNode_(modbusNode),
+                                            modbusSerialPort_(modbusSerialPort),
+                                            modbusSensorPower_(modbusSensorPower)
 {
 }
 
 WaterHub WaterHubBuilder::build(const SettingsSnapshot &settings)
 {
     GlobalSettings globalSettings = settings.globalSettings;
-    WaterHub waterHub(globalSettings);
+    WaterHub waterHub(globalSettings, modbusSensorPower_);
 
     if (settings.magistralWaterCounterSetting.has_value())
     {
@@ -36,6 +38,7 @@ WaterHub WaterHubBuilder::build(const SettingsSnapshot &settings)
         auto pressureSensor = std::make_unique<PressureSensor>(
             modbusNode_,
             modbusSerialPort_,
+            modbusSensorPower_,
             settings.pressureSensorSetting.value(),
             globalSettings.idlePressureSensorReadIntervalSeconds);
         waterHub.setPressureSensor(std::move(pressureSensor));
@@ -47,6 +50,7 @@ WaterHub WaterHubBuilder::build(const SettingsSnapshot &settings)
         auto soilSensor = std::make_unique<SoilSensor>(
             modbusNode_,
             modbusSerialPort_,
+            modbusSensorPower_,
             setting,
             globalSettings.idleSoilSensorReadIntervalSeconds);
         SoilSensor *soilSensorPtr = soilSensor.get();

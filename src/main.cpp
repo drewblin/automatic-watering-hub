@@ -8,12 +8,14 @@
 #include "Hub/WaterHubBuilder.hpp"
 #include "Hypervisor/Hypervisor.hpp"
 #include "Logging/Logger.hpp"
+#include "Modbus/ModbusSensorPower.hpp"
 #include "Setting/Settings.hpp"
 
 Clock systemClock;
 ModbusMaster modbusNode;
+ModbusSensorPower modbusSensorPower(4);
 
-WaterHubBuilder waterHubBuilder(modbusNode, Serial2);
+WaterHubBuilder waterHubBuilder(modbusNode, Serial2, modbusSensorPower);
 Settings settings;
 std::unique_ptr<WifiConnection> wifiConnection;
 std::unique_ptr<OtaUpdateService> otaUpdateService;
@@ -26,11 +28,13 @@ std::unique_ptr<ApiServerWifi> apiServerWifi;
 void setup()
 {
     Serial.begin(9600);
+    modbusSensorPower.begin();
 
     Serial2.begin(9600, SERIAL_8N1, 16, 17);
 
     settings.begin();
     SettingsSnapshot settingsSnapshot = settings.get();
+    modbusSensorPower.configureWarmup(settingsSnapshot.globalSettings.modbusWarmupMs);
 
     Logger::begin(settingsSnapshot.remoteLogUrl, settingsSnapshot.remoteLogToken);
 
@@ -52,6 +56,7 @@ void setup()
     ApiServerWifiBuilder apiServerWifiBuilder(
         modbusNode,
         Serial2,
+        modbusSensorPower,
         settingsSnapshot,
         settings,
         systemClock);

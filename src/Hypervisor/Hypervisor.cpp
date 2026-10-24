@@ -148,15 +148,5 @@ void Hypervisor::closeAllValves()
 
 void Hypervisor::closeExpiredValves()
 {
-    uint32_t currentTimeMs = millis();
-
-    for (const auto &valve : waterHub_.getValves())
-    {
-        if (!valve->isOpenExpired(currentTimeMs))
-        {
-            continue;
-        }
-
-        valve->close();
-    }
+    waterHub_.closeExpiredValves(millis());
 }

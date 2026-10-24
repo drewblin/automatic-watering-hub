@@ -19,6 +19,7 @@ ApiCommandResult GetSettingsCommand::execute()
     jsonGlobalSettings["wateringPressureSensorReadIntervalSeconds"] = globalSettings.wateringPressureSensorReadIntervalSeconds;
     jsonGlobalSettings["idleSoilSensorReadIntervalSeconds"] = globalSettings.idleSoilSensorReadIntervalSeconds;
     jsonGlobalSettings["wateringSoilSensorReadIntervalSeconds"] = globalSettings.wateringSoilSensorReadIntervalSeconds;
+    jsonGlobalSettings["modbusWarmupMs"] = globalSettings.modbusWarmupMs;
     jsonGlobalSettings["maximumManualValveOpenTimeSeconds"] = globalSettings.maximumManualValveOpenTimeSeconds;
     jsonGlobalSettings["startWateringBelowHumidityPercent"] = globalSettings.startWateringBelowHumidityPercent;
     jsonGlobalSettings["stopWateringAboveHumidityPercent"] = globalSettings.stopWateringAboveHumidityPercent;

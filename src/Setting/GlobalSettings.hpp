@@ -11,6 +11,7 @@ struct GlobalSettings
     uint32_t wateringPressureSensorReadIntervalSeconds;
     uint32_t idleSoilSensorReadIntervalSeconds;
     uint32_t wateringSoilSensorReadIntervalSeconds;
+    uint32_t modbusWarmupMs;
     uint32_t maximumManualValveOpenTimeSeconds;
     uint8_t startWateringBelowHumidityPercent;
     uint8_t stopWateringAboveHumidityPercent;

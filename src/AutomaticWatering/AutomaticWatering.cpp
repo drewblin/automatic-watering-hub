@@ -69,7 +69,7 @@ void AutomaticWatering::openNextDryValve(uint32_t currentTimeMs)
             continue;
         }
 
-        valve->open();
+        waterHub_.openValve(*valve);
         activeValve_ = valve;
         activeValveIndex_ = valveIndex;
         activeValveOpenedTimeMs_ = currentTimeMs;
@@ -86,7 +86,7 @@ void AutomaticWatering::closeActiveValve(uint32_t currentTimeMs, const char *rea
         return;
     }
 
-    activeValve_->close();
+    waterHub_.closeValve(*activeValve_);
     Logger::i("AutomaticWatering", "Closed valve pin %u: %s", activeValve_->getPin(), reason);
 
     if (activeValveIndex_ < valveLastClosedTimeMs_.size())

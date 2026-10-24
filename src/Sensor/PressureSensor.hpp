@@ -3,6 +3,7 @@
 #include <cmath>
 #include <stdint.h>
 #include "ModbusMaster.h"
+#include "Modbus/ModbusSensorPower.hpp"
 #include "Setting/PressureSensorSetting.hpp"
 
 class PressureSensor
@@ -10,8 +11,10 @@ class PressureSensor
 public:
     PressureSensor(ModbusMaster &modbusNode,
                   HardwareSerial &serialPort,
+                  ModbusSensorPower &power,
                   const PressureSensorSetting &setting,
                   uint32_t readIntervalSeconds);
+    bool isReadDue(uint32_t currentTimeMs) const;
     void readPressureIfDue(uint32_t currentTimeMs);
     void readPressure();
     void setReadIntervalSeconds(uint32_t readIntervalSeconds);
@@ -21,6 +24,7 @@ public:
 private:
     ModbusMaster &modbusNode_;
     HardwareSerial &serialPort_;
+    ModbusSensorPower &power_;
     PressureSensorSetting setting_;
     uint32_t readIntervalSeconds_;
     uint32_t lastReadTimeMs_ = 0;

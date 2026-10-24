@@ -1,26 +1,32 @@
 #include "SoilSensor.hpp"
 #include <stdint.h>
 #include "Logging/Logger.hpp"
-#include "Modbus/ModbusBusLock.hpp"
+#include "Modbus/ModbusTransaction.hpp"
 
 SoilSensor::SoilSensor(
     ModbusMaster &modbusNode,
     HardwareSerial &serialPort,
+    ModbusSensorPower &power,
     const SoilSensorSetting &setting,
     uint32_t readIntervalSeconds) : modbusNode_(modbusNode),
                                     serialPort_(serialPort),
+                                    power_(power),
                                     setting_(setting),
                                     readIntervalSeconds_(readIntervalSeconds)
 {
 }
 
+bool SoilSensor::isReadDue(uint32_t currentTimeMs) const
+{
+    return currentTimeMs - lastReadTimeMs_ >= readIntervalSeconds_ * 1000;
+}
+
 void SoilSensor::readDataIfDue(uint32_t currentTimeMs)
 {
-    if (currentTimeMs - lastReadTimeMs_ < readIntervalSeconds_ * 1000)
+    if (!isReadDue(currentTimeMs))
     {
         return;
     }
-
     lastReadTimeMs_ = currentTimeMs;
     readData();
 }
@@ -31,7 +37,7 @@ void SoilSensor::readData()
     int16_t temperatureRaw = 0;
     uint16_t humidityRaw = 0;
     {
-        ModbusBusLock lock;
+        ModbusTransaction transaction(power_);
         modbusNode_.begin(setting_.getSlaveAddress(), serialPort_);
         result = modbusNode_.readHoldingRegisters(0x0000, 2);
         if (result == modbusNode_.ku8MBSuccess)

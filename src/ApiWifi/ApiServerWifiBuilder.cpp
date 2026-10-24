@@ -13,11 +13,13 @@
 ApiServerWifiBuilder::ApiServerWifiBuilder(
     ModbusMaster &modbusNode,
     HardwareSerial &modbusSerialPort,
+    ModbusSensorPower &modbusSensorPower,
     const SettingsSnapshot &settingsSnapshot,
     Settings &settings,
     Clock &clock)
     : modbusNode_(modbusNode),
       modbusSerialPort_(modbusSerialPort),
+      modbusSensorPower_(modbusSensorPower),
       settingsSnapShot_(settingsSnapshot),
       settings_(settings),
       clock_(clock)
@@ -27,8 +29,8 @@ ApiServerWifiBuilder::ApiServerWifiBuilder(
 std::unique_ptr<ApiServerWifi> ApiServerWifiBuilder::build()
 {
     return std::make_unique<ApiServerWifi>(
-        WriteModbusRegisterCommand(modbusNode_, modbusSerialPort_),
-        ReadModbusRegisterCommand(modbusNode_, modbusSerialPort_),
+        WriteModbusRegisterCommand(modbusNode_, modbusSerialPort_, modbusSensorPower_),
+        ReadModbusRegisterCommand(modbusNode_, modbusSerialPort_, modbusSensorPower_),
         GetSettingsCommand(settingsSnapShot_, clock_),
         SaveSettingsCommand(settings_),
         settingsSnapShot_.apiAccessToken);

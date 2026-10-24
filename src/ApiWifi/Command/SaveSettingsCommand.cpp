@@ -55,7 +55,7 @@ bool SaveSettingsCommand::parseSnapshot(JsonVariantConst json, SettingsSnapshot 
         return false;
     }
 
-    GlobalSettings parsedGlobal;
+    GlobalSettings parsedGlobal{};
     if (!JsonRequestReader::readRequiredUint32(global, "idleWaterCounterReadIntervalSeconds", parsedGlobal.idleWaterCounterReadIntervalSeconds, error) ||
         !JsonRequestReader::readRequiredUint32(global, "wateringWaterCounterReadIntervalSeconds", parsedGlobal.wateringWaterCounterReadIntervalSeconds, error) ||
         !JsonRequestReader::readRequiredUint32(global, "idlePressureSensorReadIntervalSeconds", parsedGlobal.idlePressureSensorReadIntervalSeconds, error) ||
@@ -67,6 +67,11 @@ bool SaveSettingsCommand::parseSnapshot(JsonVariantConst json, SettingsSnapshot 
         !JsonRequestReader::readRequiredUint8(global, "stopWateringAboveHumidityPercent", parsedGlobal.stopWateringAboveHumidityPercent, error) ||
         !JsonRequestReader::readRequiredUint32(global, "zoneWateringDurationSeconds", parsedGlobal.zoneWateringDurationSeconds, error) ||
         !JsonRequestReader::readRequiredUint32(global, "zoneWateringRetryDelaySeconds", parsedGlobal.zoneWateringRetryDelaySeconds, error))
+    {
+        return false;
+    }
+    if (!global["modbusWarmupMs"].isNull() &&
+        !JsonRequestReader::readRequiredUint32(global, "modbusWarmupMs", parsedGlobal.modbusWarmupMs, error))
     {
         return false;
     }
@@ -87,6 +92,11 @@ bool SaveSettingsCommand::parseSnapshot(JsonVariantConst json, SettingsSnapshot 
             error = "Time intervals must be between 1 and 2147483 seconds";
             return false;
         }
+    }
+    if (parsedGlobal.modbusWarmupMs > 60000)
+    {
+        error = "Sensor warm-up must be between 0 and 60000 milliseconds";
+        return false;
     }
     if (parsedGlobal.startWateringBelowHumidityPercent > 100 ||
         parsedGlobal.stopWateringAboveHumidityPercent > 100 ||
