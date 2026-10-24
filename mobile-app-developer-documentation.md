@@ -583,6 +583,31 @@ Content-Type: application/json
   `settings.globalSettings.maximumManualValveOpenTimeSeconds`;
 - якщо valve з таким pin не існує, відповідь має статус `404 Not Found`.
 
+### POST /api/valves/close-all
+
+Негайно закриває всі клапани незалежно від способу їх відкриття. Команда
+повторювана: якщо всі клапани вже закриті, вона також повертає успіх.
+
+Запит без тіла:
+
+```http
+POST /api/valves/close-all
+Authorization: Bearer <apiAccessToken>
+```
+
+Відповідь `200 OK`:
+
+```json
+{
+  "success": true,
+  "data": {},
+  "error": null
+}
+```
+
+Команда зупиняє поточне відкриття клапанів. Автоматичний полив може знову
+відкрити клапан у наступних циклах, якщо його умови залишаються виконаними.
+
 ### POST /api/modbus/register/save
 
 Записує одне значення в Modbus holding register за допомогою функції `0x06`.
@@ -987,6 +1012,12 @@ Authorization: Bearer <mobile-session-token>
    `maximumManualValveOpenTimeSeconds`.
 4. Викликати `POST /api/valves/open-for-time`.
 5. Опитувати `GET /api/sensors/metrics`, якщо UI потребує live feedback від сенсорів.
+
+### Зупинка поливу
+
+Викликати `POST /api/valves/close-all` без тіла запиту, щоб негайно закрити
+всі клапани. Для команди потрібен той самий Bearer token, що й для інших
+HTTPS запитів.
 
 ## Нотатки щодо реалізації клієнта
 

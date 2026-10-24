@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "Command/GetSensorMetricsCommand.hpp"
+#include "Command/CloseAllValvesCommand.hpp"
 #include "Command/GetSettingsCommand.hpp"
 #include "Command/SaveSettingsCommand.hpp"
 #include "Command/OpenValveForTimeCommand.hpp"
@@ -39,5 +40,6 @@ void ApiServerWifiBuilder::enableWaterHubRoutes(
 {
     apiServerWifi.registerWaterHubRoutes(
         std::make_unique<OpenValveForTimeCommand>(waterHub, settingsSnapShot_),
+        std::make_unique<CloseAllValvesCommand>(waterHub),
         std::make_unique<GetSensorMetricsCommand>(waterHub, settingsSnapShot_));
 }

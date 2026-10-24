@@ -143,10 +143,7 @@ void Hypervisor::checkOpenValvesWithoutWaterFlow()
 
 void Hypervisor::closeAllValves()
 {
-    for (const auto &valve : waterHub_.getValves())
-    {
-        valve->close();
-    }
+    waterHub_.closeAllValves();
 }
 
 void Hypervisor::closeExpiredValves()

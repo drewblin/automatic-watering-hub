@@ -30,6 +30,7 @@ public:
     SoilSensor *getSoilSensorForValve(const Valve *valve) const;
 
     bool hasOpenValve() const;
+    void closeAllValves();
 
 private:
     std::unique_ptr<WaterCounter> magistralWaterCounter_;

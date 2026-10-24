@@ -159,3 +159,11 @@ bool WaterHub::hasOpenValve() const
 
     return false;
 }
+
+void WaterHub::closeAllValves()
+{
+    for (const auto &valve : valves_)
+    {
+        valve->close();
+    }
+}

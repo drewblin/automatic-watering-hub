@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include "ArduinoJson.h"
+#include "Command/CloseAllValvesCommand.hpp"
 #include "Command/GetSensorMetricsCommand.hpp"
 #include "Command/GetSettingsCommand.hpp"
 #include "Command/OpenValveForTimeCommand.hpp"
@@ -24,6 +25,7 @@ public:
 
     void registerWaterHubRoutes(
         std::unique_ptr<OpenValveForTimeCommand> openValveForTimeCommand,
+        std::unique_ptr<CloseAllValvesCommand> closeAllValvesCommand,
         std::unique_ptr<GetSensorMetricsCommand> getSensorMetricsCommand
     );
 
@@ -70,6 +72,7 @@ private:
     static esp_err_t handleWriteModbusRegister(httpd_req_t *request);
     static esp_err_t handleReadModbusRegister(httpd_req_t *request);
     static esp_err_t handleOpenValveForTime(httpd_req_t *request);
+    static esp_err_t handleCloseAllValves(httpd_req_t *request);
     static esp_err_t handleGetSensorMetrics(httpd_req_t *request);
     static esp_err_t handleGetSettings(httpd_req_t *request);
     static esp_err_t handleSaveSettings(httpd_req_t *request);
@@ -86,6 +89,7 @@ private:
     GetSettingsCommand getSettingsCommand_;
     SaveSettingsCommand saveSettingsCommand_;
     std::unique_ptr<OpenValveForTimeCommand> openValveForTimeCommand_;
+    std::unique_ptr<CloseAllValvesCommand> closeAllValvesCommand_;
     std::unique_ptr<GetSensorMetricsCommand> getSensorMetricsCommand_;
     std::string apiAccessToken_;
     httpd_handle_t server_ = nullptr;

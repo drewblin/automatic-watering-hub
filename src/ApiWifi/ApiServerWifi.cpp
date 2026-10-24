@@ -24,9 +24,11 @@ ApiServerWifi::ApiServerWifi(
 
 void ApiServerWifi::registerWaterHubRoutes(
     std::unique_ptr<OpenValveForTimeCommand> openValveForTimeCommand,
+    std::unique_ptr<CloseAllValvesCommand> closeAllValvesCommand,
     std::unique_ptr<GetSensorMetricsCommand> getSensorMetricsCommand)
 {
     openValveForTimeCommand_ = std::move(openValveForTimeCommand);
+    closeAllValvesCommand_ = std::move(closeAllValvesCommand);
     getSensorMetricsCommand_ = std::move(getSensorMetricsCommand);
 }
 
@@ -88,6 +90,16 @@ void ApiServerWifi::begin()
             .handler = handleOpenValveForTime,
             .user_ctx = this};
         httpd_register_uri_handler(server_, &openValveForTime);
+    }
+
+    if (closeAllValvesCommand_ != nullptr)
+    {
+        httpd_uri_t closeAllValves = {
+            .uri = "/api/valves/close-all",
+            .method = HTTP_POST,
+            .handler = handleCloseAllValves,
+            .user_ctx = this};
+        httpd_register_uri_handler(server_, &closeAllValves);
     }
 
     if (getSensorMetricsCommand_ != nullptr)
@@ -201,6 +213,15 @@ esp_err_t ApiServerWifi::handleOpenValveForTime(httpd_req_t *request)
             return server->sendCommandResult(*request, result);
         }
         return server->sendCommandResult(*request, server->execute(*server->openValveForTimeCommand_, *request));
+    });
+}
+
+esp_err_t ApiServerWifi::handleCloseAllValves(httpd_req_t *request)
+{
+    ApiServerWifi *server = static_cast<ApiServerWifi *>(request->user_ctx);
+    return server->authorizeAndHandle(*request, [&]()
+    {
+        return server->sendCommandResult(*request, server->closeAllValvesCommand_->execute());
     });
 }
 
