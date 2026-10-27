@@ -4,6 +4,21 @@
 
 #include <unordered_set>
 
+namespace
+{
+bool isValvePinAllowed(uint8_t pin)
+{
+    return pin == 18 || pin == 19 ||
+           (pin >= 21 && pin <= 23) ||
+           (pin >= 25 && pin <= 27);
+}
+
+bool isFlowSensorPinAllowed(uint8_t pin)
+{
+    return (pin >= 34 && pin <= 36) || pin == 39;
+}
+}
+
 SaveSettingsCommand::SaveSettingsCommand(Settings &settings)
     : settings_(settings)
 {
@@ -203,6 +218,11 @@ bool SaveSettingsCommand::parseSnapshot(JsonVariantConst json, SettingsSnapshot 
         {
             return false;
         }
+        if (!isFlowSensorPinAllowed(magistralPin))
+        {
+            error = "Magistral water counter GPIO pin must be one of 34, 35, 36, 39";
+            return false;
+        }
         parsedMagistralWaterCounter.emplace(magistralPin, magistralName, magistralLitersPerTick);
     }
 
@@ -252,6 +272,11 @@ bool SaveSettingsCommand::parseSnapshot(JsonVariantConst json, SettingsSnapshot 
         {
             return false;
         }
+        if (!isValvePinAllowed(pin))
+        {
+            error = "Valve GPIO pin must be one of 18, 19, 21-23, 25-27";
+            return false;
+        }
         if (soilAddresses.count(soilAddress) == 0)
         {
             error = "Each valve must reference an existing soil sensor";
@@ -275,6 +300,11 @@ bool SaveSettingsCommand::parseSnapshot(JsonVariantConst json, SettingsSnapshot 
             !JsonRequestReader::readRequiredString(item, "name", name, error) ||
             !JsonRequestReader::readRequiredPositiveFloat(item, "litersPerTick", litersPerTick, error))
         {
+            return false;
+        }
+        if (!isFlowSensorPinAllowed(pin))
+        {
+            error = "Leaf water counter GPIO pin must be one of 34, 35, 36, 39";
             return false;
         }
         if (!usedPins.insert(pin).second)
